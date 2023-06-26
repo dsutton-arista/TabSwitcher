@@ -55,7 +55,7 @@ chrome.tabs.onActivated.addListener(activeInfo => {
     Promise.all(checkTabs).then(() => {
       existingTabs = existingTabs.filter(id => id !== newTabId);
       existingTabs.push(newTabId);
-      while (existingTabs.length > 3) {
+      while (existingTabs.length > 10) {
         existingTabs.shift();
       }
       chrome.storage.local.set({tabIdHistory: existingTabs});
