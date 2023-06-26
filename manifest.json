@@ -26,5 +26,6 @@
       },
       "description": "Switch to the next tab"
     }
-  }
+  },
+  "options_page": "options.html"
 }

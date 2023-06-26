@@ -40,25 +40,39 @@ chrome.commands.onCommand.addListener(function(command) {
 
 chrome.tabs.onActivated.addListener(activeInfo => {
   let newTabId = activeInfo.tabId;
-  chrome.storage.local.get('tabIdHistory', function(data) {
-    tabIdHistory = data.tabIdHistory || [];
-    let existingTabs = [];
-    let checkTabs = tabIdHistory.map(id => new Promise(resolve =>
-      chrome.tabs.get(id, tab => {
-        if (!chrome.runtime.lastError) {
-          existingTabs.push(id);
-        }
-        resolve();
-      })
-    ));
 
-    Promise.all(checkTabs).then(() => {
-      existingTabs = existingTabs.filter(id => id !== newTabId);
-      existingTabs.push(newTabId);
-      while (existingTabs.length > 10) {
-        existingTabs.shift();
-      }
-      chrome.storage.local.set({tabIdHistory: existingTabs});
-    });
+  chrome.storage.local.get(['tabIdHistory', 'numTabs'], function(data) {
+    let tabIdHistory = data.tabIdHistory || [];
+    let numTabs = data.numTabs || 3;
+    let checksRemaining = tabIdHistory.length;
+
+    // Check each tab in the history to see if it still exists
+    for (let i = 0; i < tabIdHistory.length; i++) {
+      chrome.tabs.get(tabIdHistory[i], function(tab) {
+        if (chrome.runtime.lastError) {
+          // This tab no longer exists, remove it from tabIdHistory
+          tabIdHistory.splice(i, 1);
+        }
+
+        checksRemaining--;
+        if (checksRemaining === 0) {
+          // All checks are done, add the new tab to the history
+
+          // Remove newTabId if it's already in the array
+          tabIdHistory = tabIdHistory.filter(id => id !== newTabId);
+
+          // Add newTabId to the end of the array
+          tabIdHistory.push(newTabId);
+
+          // Ensure tabIdHistory only contains the last numTabs tab IDs
+          while (tabIdHistory.length > numTabs) {
+            tabIdHistory.shift();
+          }
+
+          // Store updated history back to storage
+          chrome.storage.local.set({tabIdHistory: tabIdHistory});
+        }
+      });
+    }
   });
 });
