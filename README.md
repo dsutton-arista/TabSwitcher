@@ -3,6 +3,12 @@ _All code and content written by ChatGPT_
 
 Tab Switcher is a Chrome extension that allows you to switch between your most recently used tabs using keyboard shortcuts.
 
+## Rationale
+Chrome does not have built-in functionality that allows you to cycle between the most recently used tabs with keyboard shortcuts.
+The native tab switching in Chrome only allows users to move to the next or previous tab in the order they appear in the tab bar using Ctrl + Tab and Ctrl + Shift + Tab respectively (or Cmd + Tab and Cmd + Shift + Tab on MacOS).
+Chrome also has a shortcut Ctrl/Cmd + [1-9] to switch to a specific tab by its position in the tab bar (1 for the first tab, 2 for the second, and so on).
+This extension provides more advanced tab management by keeping a history of tabs and switching among them in the order they were last accessed.
+
 ## Features
 Switch to the previous tab using `Ctrl+Shift+P`
 Switch to the next tab using `Ctrl+Shift+N`
