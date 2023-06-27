@@ -5,7 +5,7 @@ function switchTab(next = false) {
     let tabIdHistory = data.tabIdHistory || [];
     if (tabIdHistory.length > 0) {
       let switchToTabId;
-      if (next) {
+      if (next === false) {
         // Get the last tab, move it to the start, and then do it again
         switchToTabId = tabIdHistory.pop();
         tabIdHistory.unshift(switchToTabId);
