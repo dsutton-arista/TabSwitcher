@@ -1,5 +1,5 @@
 # Tab Switcher 
-_All code written by ChatGPT_
+_All code and content written by ChatGPT_
 
 Tab Switcher is a Chrome extension that allows you to switch between your most recently used tabs using keyboard shortcuts.
 
