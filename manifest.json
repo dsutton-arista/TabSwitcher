@@ -25,6 +25,12 @@
         "default": "Ctrl+Shift+P"
       },
       "description": "Switch to the next tab"
+    },
+    "switch_between_current_and_last": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S"
+      },
+      "description": "Switch between current and last tab"
     }
   },
   "options_page": "options.html"

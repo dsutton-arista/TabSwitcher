@@ -34,9 +34,24 @@ chrome.commands.onCommand.addListener(function(command) {
     switchTab();
   } else if (command === "switch_to_next_tab") {
     switchTab(true); // true indicates that it should switch to the "next" tab
+  } else if (command === "switch_between_current_and_last") {
+    switchBetweenCurrentAndLast();
   }
 });
 
+function switchBetweenCurrentAndLast() {
+  // Get tabIdHistory from storage
+  chrome.storage.local.get('tabIdHistory', function(data) {
+    let tabIdHistory = data.tabIdHistory || [];
+    if (tabIdHistory.length > 1) {
+      // Get the second last tab id
+      let secondLastTabId = tabIdHistory[tabIdHistory.length - 2];
+
+      // Make the second last tab active
+      chrome.tabs.update(secondLastTabId, {active: true});
+    }
+  });
+}
 
 chrome.tabs.onActivated.addListener(activeInfo => {
   let newTabId = activeInfo.tabId;
