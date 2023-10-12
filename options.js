@@ -10,6 +10,12 @@ window.onload = function() {
   // Save the setting when the save button is clicked
   saveButton.onclick = function() {
     let numTabs = parseInt(numTabsInput.value, 10);
-    chrome.storage.local.set({numTabs: numTabs});
+    if (numTabs >= 1 && numTabs <= 10) {
+      chrome.storage.local.set({numTabs: numTabs}, function() {
+        alert('Settings saved successfully.');
+      });
+    } else {
+      alert('Please enter a number between 1 and 10.');
+    }
   };
 }
