@@ -3,16 +3,14 @@ let tabIdHistory = [];
 function switchTab(tabIdHistory, next = false) {
   if (tabIdHistory.length > 0) {
     let switchToTabId;
-    if (next === false) {
-      // Get the last tab, move it to the start, and then do it again
-      switchToTabId = tabIdHistory.pop();
-      tabIdHistory.unshift(switchToTabId);
-      switchToTabId = tabIdHistory.pop();
-      tabIdHistory.unshift(switchToTabId);
-    } else {
-      // get the first tab and move it to the end
+    if (next) {
+      // for next tab: get the first tab and move it to the end
       switchToTabId = tabIdHistory.shift();
       tabIdHistory.push(switchToTabId);
+    } else {
+      // for previous tab: get the last tab and move it to the start
+      switchToTabId = tabIdHistory.pop();
+      tabIdHistory.unshift(switchToTabId);
     }
     chrome.tabs.update(switchToTabId, {active: true});
   }
