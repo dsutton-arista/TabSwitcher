@@ -1,4 +1,4 @@
-let tabIdHistory = [];
+const EXTENDED_HISTORY_LIMIT = 100;
 
 function switchTab(tabIdHistory, next = false) {
   if (tabIdHistory.length > 0) {
@@ -8,9 +8,10 @@ function switchTab(tabIdHistory, next = false) {
       switchToTabId = tabIdHistory.shift();
       tabIdHistory.push(switchToTabId);
     } else {
-      // for previous tab: get the last tab and move it to the start
+      // for previous tab: Get the last two tabs. The last one is current tab, the one before that is the previous tab.
+      let currentTabId = tabIdHistory.pop();
       switchToTabId = tabIdHistory.pop();
-      tabIdHistory.unshift(switchToTabId);
+      tabIdHistory.unshift(currentTabId, switchToTabId);  // Add them back but switch their positions.
     }
     chrome.tabs.update(switchToTabId, {active: true});
   }
@@ -58,25 +59,63 @@ chrome.commands.onCommand.addListener(function(command) {
   });
 });
 
+
 chrome.tabs.onActivated.addListener(activeInfo => {
-  let newTabId = activeInfo.tabId;
+    let newTabId = activeInfo.tabId;
 
-  chrome.storage.local.get(['tabIdHistory', 'numTabs'], function(data) {
-    let tabIdHistory = data.tabIdHistory || [];
-    let numTabs = data.numTabs || 3;
+    chrome.storage.local.get(['tabIdHistory', 'extendedTabIdHistory', 'numTabs'], function(data) {
+        let tabIdHistory = data.tabIdHistory || [];
+        extendedTabIdHistory = data.extendedTabIdHistory || [];
+        let numTabs = data.numTabs || 3;
 
-    // Remove newTabId if it's already in the array
-    tabIdHistory = tabIdHistory.filter(id => id !== newTabId);
+        // Remove newTabId if it's already in the array
+        tabIdHistory = tabIdHistory.filter(id => id !== newTabId);
 
-    // Add newTabId to the end of the array
-    tabIdHistory.push(newTabId);
+        // Add newTabId to the end of the array
+        tabIdHistory.push(newTabId);
 
-    // Ensure tabIdHistory only contains the last numTabs tab IDs
-    while (tabIdHistory.length > numTabs) {
-      tabIdHistory.shift();
-    }
+        // Ensure tabIdHistory only contains the last numTabs tab IDs
+        while (tabIdHistory.length > numTabs) {
+            tabIdHistory.shift();
+        }
 
-    // Store updated history back to storage
-    chrome.storage.local.set({tabIdHistory: tabIdHistory});
-  });
+        // Add newTabId to extendedTabIdHistory if not already there
+        if (!extendedTabIdHistory.includes(newTabId)) {
+            extendedTabIdHistory.push(newTabId);
+            while (extendedTabIdHistory.length > EXTENDED_HISTORY_LIMIT) {
+                extendedTabIdHistory.shift();
+            }
+        }
+
+        // Store updated histories back to storage
+        chrome.storage.local.set({
+            tabIdHistory: tabIdHistory,
+            extendedTabIdHistory: extendedTabIdHistory
+        });
+    });
+});
+
+chrome.tabs.onRemoved.addListener(function(tabId) {
+    chrome.storage.local.get(['tabIdHistory', 'extendedTabIdHistory'], function(data) {
+        let tabIdHistory = data.tabIdHistory || [];
+        let extendedTabIdHistory = data.extendedTabIdHistory || [];
+        
+        let index = tabIdHistory.indexOf(tabId);
+        if (index !== -1) {
+            tabIdHistory.splice(index, 1); // Remove from primary history
+    
+            // Add most recent from extended history not already in primary history
+            for (let i = extendedTabIdHistory.length - 1; i >= 0; i--) {
+                if (!tabIdHistory.includes(extendedTabIdHistory[i])) {
+                    tabIdHistory.push(extendedTabIdHistory[i]);
+                    break;
+                }
+            }
+            // Store both histories back to storage in one go
+            chrome.storage.local.set({
+                tabIdHistory: tabIdHistory,
+                extendedTabIdHistory: extendedTabIdHistory
+            });
+        }
+    });
 });
