@@ -1,121 +1,67 @@
-const EXTENDED_HISTORY_LIMIT = 100;
+// If TabHistoryManager is in a different file, you might need to import it here. This depends on how your project is structured.
+// const TabHistoryManager = require('./TabHistoryManager'); // CommonJS import
+// import TabHistoryManager from './TabHistoryManager'; // ES6 import
 
-function switchTab(tabIdHistory, next = false) {
-  if (tabIdHistory.length > 0) {
-    let switchToTabId;
-    if (next) {
-      // for next tab: get the first tab and move it to the end
-      switchToTabId = tabIdHistory.shift();
-      tabIdHistory.push(switchToTabId);
-    } else {
-      // for previous tab: Get the last two tabs. The last one is current tab, the one before that is the previous tab.
-      let currentTabId = tabIdHistory.pop();
-      switchToTabId = tabIdHistory.pop();
-      tabIdHistory.unshift(currentTabId, switchToTabId);  // Add them back but switch their positions.
-    }
-    chrome.tabs.update(switchToTabId, {active: true});
-  }
-  return tabIdHistory;
-}
+// Initialize the Tab History Manager
+const tabHistoryManager = new TabHistoryManager();
 
-function switchBetweenCurrentAndLast(tabIdHistory) {
-  if (tabIdHistory.length > 1) {
-    // Get the second last tab id
-    let secondLastTabId = tabIdHistory[tabIdHistory.length - 2];
-
-    // Make the second last tab active
-    chrome.tabs.update(secondLastTabId, {active: true});
-  }
-}
-
+// Listener for command inputs like switching tabs
 chrome.commands.onCommand.addListener(function(command) {
-  chrome.storage.local.get(['tabIdHistory', 'numTabs'], function(data) {
-    let tabIdHistory = data.tabIdHistory || [];
-    let checksRemaining = tabIdHistory.length;
-    let validTabIds = [];
-
-    // Check each tab in the history to see if it still exists
-    tabIdHistory.forEach((tabId, i) => {
-      chrome.tabs.get(tabId, function(tab) {
-        checksRemaining--;
-        if (!chrome.runtime.lastError) {
-          // This tab still exists, add it to validTabIds
-          validTabIds.push(tabId);
-        }
-        if (checksRemaining === 0) {
-          // All checks are done
-          if (command === "switch_to_previous_tab") {
-            validTabIds = switchTab(validTabIds);
-          } else if (command === "switch_to_next_tab") {
-            validTabIds = switchTab(validTabIds, true); // true indicates that it should switch to the "next" tab
-          } else if (command === "switch_between_current_and_last") {
-            switchBetweenCurrentAndLast(validTabIds);
-          }
-          // Now that the command is executed, update the tabIdHistory in storage
-          chrome.storage.local.set({tabIdHistory: validTabIds});
-        }
-      });
-    });
-  });
+    switch (command) {
+        case "switch_to_previous_tab":
+        chrome.tabs.update(tabHistoryManager.previousTab(true), {active: true});
+	// This method should handle the logic of switching to the previous tab.
+        break;
+        case "switch_to_next_tab":
+        chrome.tabs.update(tabHistoryManager.nextTab(true), {active: true});
+        break;
+        case "switch_between_current_and_last":
+        chrome.tabs.update(tabHistoryManager.switchTab(true), {active: true});
+    }
 });
 
-
+// Listener for when a tab is activated (selected)
 chrome.tabs.onActivated.addListener(activeInfo => {
-    let newTabId = activeInfo.tabId;
-
-    chrome.storage.local.get(['tabIdHistory', 'extendedTabIdHistory', 'numTabs'], function(data) {
-        let tabIdHistory = data.tabIdHistory || [];
-        extendedTabIdHistory = data.extendedTabIdHistory || [];
-        let numTabs = data.numTabs || 3;
-
-        // Remove newTabId if it's already in the array
-        tabIdHistory = tabIdHistory.filter(id => id !== newTabId);
-
-        // Add newTabId to the end of the array
-        tabIdHistory.push(newTabId);
-
-        // Ensure tabIdHistory only contains the last numTabs tab IDs
-        while (tabIdHistory.length > numTabs) {
-            tabIdHistory.shift();
-        }
-
-        // Add newTabId to extendedTabIdHistory if not already there
-        if (!extendedTabIdHistory.includes(newTabId)) {
-            extendedTabIdHistory.push(newTabId);
-            while (extendedTabIdHistory.length > EXTENDED_HISTORY_LIMIT) {
-                extendedTabIdHistory.shift();
-            }
-        }
-
-        // Store updated histories back to storage
-        chrome.storage.local.set({
-            tabIdHistory: tabIdHistory,
-            extendedTabIdHistory: extendedTabIdHistory
-        });
-    });
+    tabHistoryManager.activateTab(activeInfo.tabId, true); // This method should internally handle adding the tab to history and other required logic.
 });
 
-chrome.tabs.onRemoved.addListener(function(tabId) {
-    chrome.storage.local.get(['tabIdHistory', 'extendedTabIdHistory'], function(data) {
-        let tabIdHistory = data.tabIdHistory || [];
-        let extendedTabIdHistory = data.extendedTabIdHistory || [];
+// Listener for when a tab is closed
+chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
+    tabHistoryManager.removeTab(tabId, true); // This method should internally handle removing the tab from history and other required logic.
+});
+
+// Assuming we need to keep track of the tab history across browser sessions, we might need to save the state.
+// You should call this function whenever the internal state of your tabHistoryManager changes.
+function saveState() {
+    // Convert the manager's state to a storable format (like JSON)
+    const stateToSave = tabHistoryManager.getState();
+
+    chrome.storage.local.set({tabHistoryManagerState: stateToSave}, function() {
+        if (chrome.runtime.lastError) {
+            console.error('Error saving state:', chrome.runtime.lastError.message);
+        } else {
+            console.log('State saved');
+        }
+    });
+}
+
+// Similarly, you would need a function to load the state when the extension starts up.
+function loadState() {
+    chrome.storage.local.get('tabHistoryManagerState', function(data) {
+        if (chrome.runtime.lastError) {
+            console.error('Error loading state:', chrome.runtime.lastError.message);
+            return;
+        }
         
-        let index = tabIdHistory.indexOf(tabId);
-        if (index !== -1) {
-            tabIdHistory.splice(index, 1); // Remove from primary history
-    
-            // Add most recent from extended history not already in primary history
-            for (let i = extendedTabIdHistory.length - 1; i >= 0; i--) {
-                if (!tabIdHistory.includes(extendedTabIdHistory[i])) {
-                    tabIdHistory.push(extendedTabIdHistory[i]);
-                    break;
-                }
-            }
-            // Store both histories back to storage in one go
-            chrome.storage.local.set({
-                tabIdHistory: tabIdHistory,
-                extendedTabIdHistory: extendedTabIdHistory
-            });
+        if (data.tabHistoryManagerState) {
+            tabHistoryManager.setState(data.tabHistoryManagerState);
+            console.log('State loaded');
+        } else {
+            console.log('No saved state found');
         }
     });
-});
+}
+
+// Call loadState at startup to initialize the manager's state.
+loadState();
+
