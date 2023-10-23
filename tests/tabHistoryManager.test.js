@@ -9,41 +9,41 @@ describe('TabHistoryManager', () => {
     });
 
     test('should add new tabs to history', () => {
-        manager.tabActivated('A');
+        manager.tabToActivate('A');
         expect(manager.getHistory()).toEqual(['A']);
         
-        manager.tabActivated('B');
+        manager.tabToActivate('B');
         expect(manager.getHistory()).toEqual(['A', 'B']);
     });
 
     test('should maintain history size', () => {
 	manager.changeHistorySize(3);
-        manager.tabActivated('A');
-        manager.tabActivated('B');
-        manager.tabActivated('C');
-        manager.tabActivated('D');
+        manager.tabToActivate('A');
+        manager.tabToActivate('B');
+        manager.tabToActivate('C');
+        manager.tabToActivate('D');
         expect(manager.getHistory()).toEqual(['B', 'C', 'D']); // Oldest (A) is removed.
     });
 
     test('should cycle through tabs', () => {
-        manager.tabActivated(1);
-        manager.tabActivated(2);
-        manager.tabActivated(3);
+        manager.tabToActivate(1);
+        manager.tabToActivate(2);
+        manager.tabToActivate(3);
         expect(manager.nextTab()).toBe(1);
         expect(manager.previousTab()).toBe(3);
     });
 
     test('add a new tab after cycling through the tabs', () => {
 	manager.changeHistorySize(3);
-        manager.tabActivated('A');
-        manager.tabActivated('B');
-        manager.tabActivated('C'); // 'A B C'
+        manager.tabToActivate('A');
+        manager.tabToActivate('B');
+        manager.tabToActivate('C'); // 'A B C'
 	// manager.consoleLogState('A B C');
         expect(manager.nextTab()).toBe('A'); // 'B C A'
 	// manager.consoleLogState('B C A');
         expect(manager.previousTab()).toBe('C'); // 'B A C'
 	// manager.consoleLogState('A B C');
-        manager.tabActivated('D'); // 'A C D'
+        manager.tabToActivate('D'); // 'A C D'
 	// manager.consoleLogState('B C D');
         expect(manager.nextTab()).toBe('B'); // 'C D A'
 	// manager.consoleLogState('C D B');
@@ -52,9 +52,9 @@ describe('TabHistoryManager', () => {
 
     test('add a new tab after cycling through the tabs', () => {
 	manager.changeHistorySize(3);
-        manager.tabActivated('A');
-        manager.tabActivated('B');
-        manager.tabActivated('C');
+        manager.tabToActivate('A');
+        manager.tabToActivate('B');
+        manager.tabToActivate('C');
 	// manager.consoleLogState('A B C');
         expect(manager.nextTab()).toBe('A');
 	// manager.consoleLogState('B C A');
@@ -77,8 +77,8 @@ describe('TabHistoryManager', () => {
 
     test('activate the same tab multiple times', () => {
 	manager.changeHistorySize(3);
-	manager.tabActivated('A');
-	manager.tabActivated('A');
+	manager.tabToActivate('A');
+	manager.tabToActivate('A');
 	expect(manager.nextTab()).toBe('A');
 	expect(manager.previousTab()).toBe('A');
     });
@@ -86,21 +86,21 @@ describe('TabHistoryManager', () => {
     test('maintain history size limit', () => {
 	manager.changeHistorySize(3);
 	for (let i = 1; i <= 15; i++) { 
-            manager.tabActivated(i);
+            manager.tabToActivate(i);
 	}
 	expect(manager.getHistorySize()).toBe(3);
     });
 
     test('boundary navigation', () => {
-	['A', 'B', 'C'].forEach(id => manager.tabActivated(id));
+	['A', 'B', 'C'].forEach(id => manager.tabToActivate(id));
 	expect(manager.nextTab()).toBe('A'); // assuming loop back to the start
 	expect(manager.previousTab()).toBe('C'); // assuming loop back to the end
     });
 
     test('handle unexpected input', () => {
-	expect(() => manager.tabActivated(null)).not.toThrow();
-	expect(() => manager.tabActivated(undefined)).not.toThrow();
-	expect(() => manager.tabActivated('randomString')).not.toThrow();
+	expect(() => manager.tabToActivate(null)).not.toThrow();
+	expect(() => manager.tabToActivate(undefined)).not.toThrow();
+	expect(() => manager.tabToActivate('randomString')).not.toThrow();
 	// If you have specific behavior defined for these cases, check for those instead of just 'not.toThrow()'
     });
 
@@ -108,27 +108,27 @@ describe('TabHistoryManager', () => {
 	manager.changeCycleSize(4); // Assuming you can change limit on-the-fly.
 	const sequence = ['A', 'B', 'C', 'D']; // Using letters for clarity.
 	
-	sequence.forEach(tab => manager.tabActivated(tab));
-	manager.tabActivated('A');
+	sequence.forEach(tab => manager.tabToActivate(tab));
+	manager.tabToActivate('A');
 //	manager.consoleLogState("sequential tab activation and navigation: start");
 	sequence.forEach((tab, index) => {
             const nextIndex = (index + 1) % sequence.length;
             const expectedNextTab = sequence[nextIndex]; // This is the tab ID we expect nextTab() to return.
-	    manager.tabActivated(sequence[index]);
+	    manager.tabToActivate(sequence[index]);
 //	    manager.consoleLogState("sequential tab activation and navigation: index: " + index + ' expectedNextTab: ' + expectedNextTab);
             expect(manager.nextTab()).toBe(expectedNextTab); // Compare directly with the expected tab ID.
 	});
     });
 
     test('tab removal from history', () => {
-        ['A', 'B', 'C', 'D'].forEach(id => manager.tabActivated(id));
+        ['A', 'B', 'C', 'D'].forEach(id => manager.tabToActivate(id));
         manager.removeTab('B'); // This should remove 'B' from the history.
         expect(manager.getHistory()).not.toContain('B'); // 'B' should no longer be in the history.
     });
     
     test('should handle rapid sequential activations', () => {
 	for (let i = 0; i < 1000; i++) {
-            manager.tabActivated(i);
+            manager.tabToActivate(i);
 	}
 	// Check the state remains consistent and no errors occur.
 	expect(manager.checkState()).toBeTruthy();
@@ -136,17 +136,17 @@ describe('TabHistoryManager', () => {
 
     test('should maintain consistent state', () => {
 	// Perform a series of operations
-	manager.tabActivated('A');
+	manager.tabToActivate('A');
 	manager.nextTab();
 	manager.previousTab();
-	manager.tabActivated('B');
+	manager.tabToActivate('B');
 
 	// Check that the state is still consistent
 	expect(manager.checkState()).toBeTruthy();
     });
 
     test('should handle all tabs being removed', () => {
-	[1, 2, 3].forEach(id => manager.tabActivated(id));
+	[1, 2, 3].forEach(id => manager.tabToActivate(id));
 	[1, 2, 3].forEach(id => manager.removeTab(id)); // Assuming removeTab exists
 
 	// Expecting either specific behavior or simply no errors
@@ -164,11 +164,11 @@ describe('TabHistoryManager', () => {
     });
 
     test('certain methods should be idempotent', () => {
-	manager.tabActivated(1);
+	manager.tabToActivate(1);
 	const historyAfterFirstActivation = [...manager.getHistory()];
 	// manager.consoleLogState("historyafterfirstactivation");
 
-	manager.tabActivated(1);
+	manager.tabToActivate(1);
 	const historyAfterSecondActivation = [...manager.getHistory()];
 	// manager.consoleLogState("historyaftersecondactivation");
 
@@ -177,7 +177,7 @@ describe('TabHistoryManager', () => {
 
     test('should toggle between the current and last accessed tabs', () => {
         // Setup initial tabs
-        ['A', 'B', 'C'].forEach(id => manager.tabActivated(id));
+        ['A', 'B', 'C'].forEach(id => manager.tabToActivate(id));
         
         // Check if the state remains consistent
         expect(manager.checkState()).toBeTruthy();
@@ -196,14 +196,14 @@ describe('TabHistoryManager', () => {
     });
 
     test('should handle toggle with insufficient history', () => {
-        manager.tabActivated('A');
+        manager.tabToActivate('A');
         // There's only one tab in the history, so it shouldn't really switch.
         expect(manager.switchTab()).toBe('A');
     });
 
     test('consistent state after toggling tabs', () => {
         // This is especially important to ensure that repeated switches do not corrupt the state.
-        [1, 2, 3, 4].forEach(id => manager.tabActivated(id));
+        [1, 2, 3, 4].forEach(id => manager.tabToActivate(id));
 
         // Toggle back and forth
         manager.switchTab();  // From 4 to 3
@@ -214,15 +214,15 @@ describe('TabHistoryManager', () => {
         expect(manager.checkState()).toBeTruthy();
     });
 
-    test('interaction between switchTab and tabActivated', () => {
+    test('interaction between switchTab and tabToActivate', () => {
 	// Setup initial tabs
-	['A', 'B', 'C'].forEach(id => manager.tabActivated(id));
+	['A', 'B', 'C'].forEach(id => manager.tabToActivate(id));
 
 	// Switch between the current and last accessed tabs
 	expect(manager.switchTab()).toBe('B'); // Current should now be B
 	// manager.consoleLogState("C A B");
 	// Activate a new tab
-	manager.tabActivated('D');  // Current should now be 4
+	manager.tabToActivate('D');  // Current should now be 4
 	// manager.consoleLogState("C A B D");
 
 	// The previous tab ('B') should now be the last accessed, so switching should bring it forward
@@ -232,7 +232,7 @@ describe('TabHistoryManager', () => {
     test('interaction between switchTab and removeTab', () => {
 	// Setup initial tabs
 	manager.changeCycleSize(4);
-	['A', 'B', 'C', 'D'].forEach(id => manager.tabActivated(id));
+	['A', 'B', 'C', 'D'].forEach(id => manager.tabToActivate(id));
 
 	// Remove the current tab; the new current should be the last accessed.
 	manager.removeTab('D');  // Remove tab 4, current should be 3 now
@@ -253,7 +253,7 @@ describe('TabHistoryManager', () => {
     test('interaction between switchTab, next, and previous', () => {
 	// Setup initial tabs
 	manager.changeCycleSize(4);
-	['A', 'B', 'C', 'D'].forEach(id => manager.tabActivated(id));
+	['A', 'B', 'C', 'D'].forEach(id => manager.tabToActivate(id));
 
 	expect(manager.currentTabId()).toBe('D');
 	// Navigate using previousTab (should go to C)
@@ -280,7 +280,7 @@ describe('TabHistoryManager', () => {
 	expect(manager.switchTab()).toBeUndefined();
 
 	// Add a single tab and test behavior
-	manager.tabActivated('A');
+	manager.tabToActivate('A');
 
 	// Trying to switch with one tab shouldn't change the current tab
 	expect(manager.switchTab()).toBe('A');
@@ -288,7 +288,7 @@ describe('TabHistoryManager', () => {
 
     test('increasing cycle size retains existing history', () => {
 	// Setup initial tabs
-	['A', 'B'].forEach(id => manager.tabActivated(id));
+	['A', 'B'].forEach(id => manager.tabToActivate(id));
 	expect(manager.getHistory()).toEqual(['A', 'B']);
 
 	// Expand cycle size and verify the same history
@@ -296,13 +296,13 @@ describe('TabHistoryManager', () => {
 	expect(manager.getHistory()).toEqual(['A', 'B']);
 
 	// New tabs should also be added now that there's space
-	['C', 'D'].forEach(id => manager.tabActivated(id));
+	['C', 'D'].forEach(id => manager.tabToActivate(id));
 	expect(manager.getHistory()).toEqual(['A', 'B', 'C', 'D']);
     });
 
     test('switchTab operates correctly after cycle size change', () => {
 	// Initialize with some tabs
-	['A', 'B', 'C'].forEach(id => manager.tabActivated(id));
+	['A', 'B', 'C'].forEach(id => manager.tabToActivate(id));
 
 	// Change the cycle size (reduce)
 	manager.changeCycleSize(2);
@@ -313,7 +313,7 @@ describe('TabHistoryManager', () => {
 
     test('maintains consistent state during rapid cycle size changes', () => {
 	// Perform operations and check for consistency
-	['A', 'B', 'C', 'D', 'E'].forEach(id => manager.tabActivated(id));
+	['A', 'B', 'C', 'D', 'E'].forEach(id => manager.tabToActivate(id));
 
 	// Rapid changes in cycle size
 	manager.changeCycleSize(5);
@@ -329,7 +329,7 @@ describe('TabHistoryManager', () => {
 	manager.changeCycleSize(0);
 
 	// Try adding tabs and verify that history is not kept
-	['A', 'B', 'C'].forEach(id => manager.tabActivated(id));
+	['A', 'B', 'C'].forEach(id => manager.tabToActivate(id));
 
 	// switchTab ignore cycle size since it assumes a hardcoded cycle size of 2
 	expect(manager.switchTab()).toBe('B');

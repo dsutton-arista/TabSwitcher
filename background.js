@@ -43,29 +43,29 @@ class TabHistoryManager {
             throw new Error('Invalid state object. The state must contain tabHistory and cycleSize.');
         }
     }
-
+    
     changeCycleSize(newCycleSize) {
 	return this.cycleSize = newCycleSize;
     }
-
+    
     changeHistorySize(newHistorySize) {
 	return this.historyLimit = newHistorySize;
     }
-
+    
     currentTabId(log = false) {
 	if (log || this.logLevel) {
             this.consoleLogState('Current Tab Id');
 	}
         return this.tabHistory[this.tabHistory.length - 1];
     }
-
+    
     currentTabIndex() {
         return this.tabHistory.length - 1;
     }
 
-    tabActivated(tabId, log = false) {
+    tabToActivate(tabId, log = false) {
 	if (log || this.logLevel) {
-	    console.time("tabActivated");
+	    console.time("tabToActivate");
 	    if (this.logLevel > 1)
 		this.consoleLogState('Start Activate Tab. Activate: ' + tabId);
 	}
@@ -85,7 +85,7 @@ class TabHistoryManager {
 	if (log || this.logLevel) {
 	    if (this.logLevel > 1)
 		this.consoleLogState('End Activate Tab');
-	    console.timeEnd("tabActivated");
+	    console.timeEnd("tabToActivate");
 	}
 
 	return this.tabHistory[this.tabHistory.length - 1];
@@ -105,7 +105,7 @@ class TabHistoryManager {
 	}
 
 	this.lastActiveId = this.tabHistory[this.tabHistory.length - 1];
-
+	
 	// Adjust cycle size if it's larger than the available history.
 	const effectiveCycleSize = Math.min(cycleSize, this.tabHistory.length);
 	if (!effectiveCycleSize) {
@@ -169,6 +169,13 @@ class TabHistoryManager {
 	    if (this.logLevel > 1)
 		this.consoleLogState('Start switch');
 	}
+	// if (this.tabHistory.length > 2)
+	//     return this.tabHistory[this.tabHistory.length -  2];
+	// else if (this.tabHistory.length == 1)
+	//     return this.tabHistory[0];
+	// else
+	//     return undefined;
+
 	let tabToSwitchTo = this.tabHistory.indexOf(this.lastActiveId);
 	if (tabToSwitchTo === -1) {
 	    // Last active tab is unknown - if there are tabs assume that last one in the history
@@ -176,10 +183,10 @@ class TabHistoryManager {
 		tabToSwitchTo = this.tabHistory.length -  1;
 		this.lastActiveId = this.tabHistory[tabToSwitchTo];
 	    }
-	    else return;  // Tab not in history.
+	    else return undefined;  // Tab not in history.
 	}
 
-	return this.tabActivated(this.lastActiveId, log);
+	return this.tabToActivate(this.lastActiveId, log);
     }
 
     removeTab(tabId, log = false) {
@@ -203,7 +210,7 @@ class TabHistoryManager {
 	console.log(message + ' - Current tab history: ', this.tabHistory, ' current: ', this.currentTabId(),
 		    'lastActiveId: ', this.lastActiveId);
     }
-
+    
     maintainSize() {
         while (this.tabHistory.length > this.historyLimit) {
             this.tabHistory.shift(); // Remove the oldest tab.
@@ -225,8 +232,8 @@ class TabHistoryManager {
     checkState() {
         // If all checks pass, return true indicating a valid state
         return true;
-    }
-
+    }    
+    
 }
 
 // module.exports = TabHistoryManager;
@@ -237,7 +244,7 @@ const tabHistoryManager = new TabHistoryManager(5);
 
 // Listener for command inputs like switching tabs
 chrome.commands.onCommand.addListener(function(command) {
-    console.time(command);
+    console.time(command);	
     loadState();
     switch (command) {
     case "switch_to_previous_tab":
@@ -254,12 +261,12 @@ chrome.commands.onCommand.addListener(function(command) {
 
 // Listener for when a tab is activated (selected)
 chrome.tabs.onActivated.addListener(activeInfo => {
-    tabHistoryManager.tabActivated(activeInfo.tabId); // This method should internally handle adding the tab to history and other required logic.
+    tabHistoryManager.tabToActivate(activeInfo.tabId); // This method should internally handle adding the tab to history and other required logic.
 });
 
 // Listener for when a tab is closed
 chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
-     tabHistoryManager.removeTab(tabId); // This method should internally handle removing the tab from history and other required logic.
+    tabHistoryManager.removeTab(tabId); // This method should internally handle removing the tab from history and other required logic.
 });
 
 // Similarly, you would need a function to load the state when the extension starts up.
@@ -283,7 +290,7 @@ function initializeTabs() {
     for (let tab of tabs) {
 	// Performing the action on each tab
         // console.log('activating tab ' + tab.id);
-	tabHistoryManager.tabActivated(tab.id);
+	tabHistoryManager.tabToActivate(tab.id);
     }
   });
 }

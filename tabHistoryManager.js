@@ -63,9 +63,9 @@ class TabHistoryManager {
         return this.tabHistory.length - 1;
     }
 
-    tabActivated(tabId, log = false) {
+    tabToActivate(tabId, log = false) {
 	if (log || this.logLevel) {
-	    console.time("tabActivated");
+	    console.time("tabToActivate");
 	    if (this.logLevel > 1)
 		this.consoleLogState('Start Activate Tab. Activate: ' + tabId);
 	}
@@ -85,7 +85,7 @@ class TabHistoryManager {
 	if (log || this.logLevel) {
 	    if (this.logLevel > 1)
 		this.consoleLogState('End Activate Tab');
-	    console.timeEnd("tabActivated");
+	    console.timeEnd("tabToActivate");
 	}
 
 	return this.tabHistory[this.tabHistory.length - 1];
@@ -169,6 +169,13 @@ class TabHistoryManager {
 	    if (this.logLevel > 1)
 		this.consoleLogState('Start switch');
 	}
+	// if (this.tabHistory.length > 2)
+	//     return this.tabHistory[this.tabHistory.length -  2];
+	// else if (this.tabHistory.length == 1)
+	//     return this.tabHistory[0];
+	// else
+	//     return undefined;
+
 	let tabToSwitchTo = this.tabHistory.indexOf(this.lastActiveId);
 	if (tabToSwitchTo === -1) {
 	    // Last active tab is unknown - if there are tabs assume that last one in the history
@@ -176,10 +183,10 @@ class TabHistoryManager {
 		tabToSwitchTo = this.tabHistory.length -  1;
 		this.lastActiveId = this.tabHistory[tabToSwitchTo];
 	    }
-	    else return;  // Tab not in history.
+	    else return undefined;  // Tab not in history.
 	}
 
-	return this.tabActivated(this.lastActiveId, log);
+	return this.tabToActivate(this.lastActiveId, log);
     }
 
     removeTab(tabId, log = false) {
