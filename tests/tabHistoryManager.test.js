@@ -324,9 +324,9 @@ describe('TabHistoryManager', () => {
 	expect(manager.nextTab()).toBe('B');
     });
 
-    test('handles cycle size of zero', () => {
-	// Set the cycle size to zero
-	manager.changeCycleSize(0);
+    test('handles cycle size of one', () => {
+	// Set the cycle size to one
+	manager.changeCycleSize(1);
 
 	// Try adding tabs and verify that history is not kept
 	['A', 'B', 'C'].forEach(id => manager.tabToActivate(id));

@@ -1,20 +1,30 @@
 // tabHistoryManager.js
 
+// Enumeration for tab cycling direction
 const Direction = Object.freeze({
     NEXT: { value: 1, name: 'Next' },
     PREVIOUS: { value: -1, name: 'Previous' }
 });
 
-
+// Class responsible for managing the tab history and related operations
 class TabHistoryManager {
-
     constructor(cycleSize = 3) {
+        // List maintaining the order of accessed tabs
         this.tabHistory = [];
-	this.historyLimit = 100;
+
+        // Maximum number of tabs to keep in the history
+        this.historyLimit = 100;
+
+        // Number of tabs to consider while cycling through tab history
         this.cycleSize = cycleSize;
-	this.lastActiveId = undefined;
-	this.logLevel = 0;
+
+        // Tab ID of the last active tab
+        this.lastActiveId = undefined;
+
+        // Level of log details to output
+        this.logLevel = 0;
     }
+
 
     /**
      * Captures the current state of the tab manager.
@@ -43,19 +53,28 @@ class TabHistoryManager {
             throw new Error('Invalid state object. The state must contain tabHistory and cycleSize.');
         }
     }
-    
+
+    // Update the size of the cycle while maintaining bounds and consistency
     changeCycleSize(newCycleSize) {
-	return this.cycleSize = newCycleSize;
+        if (newCycleSize > 0) { // Ensuring the cycle size is positive
+            this.cycleSize = newCycleSize;
+        } else {
+            throw new Error('Cycle size must be a positive integer.');
+        }
+        return this.cycleSize;
     }
-    
+
+    // Update the history size limit while ensuring it's within reasonable bounds
     changeHistorySize(newHistorySize) {
-	return this.historyLimit = newHistorySize;
+        if (newHistorySize >= 1 && newHistorySize <= 100) { // Bounds check
+            this.historyLimit = newHistorySize;
+        } else {
+            throw new Error('History size must be between 1 and 100.');
+        }
+        return this.historyLimit;
     }
-    
+
     currentTabId(log = false) {
-	if (log || this.logLevel) {
-            this.consoleLogState('Current Tab Id');
-	}
         return this.tabHistory[this.tabHistory.length - 1];
     }
     
@@ -65,7 +84,7 @@ class TabHistoryManager {
 
     tabToActivate(tabId, log = false) {
 	if (log || this.logLevel) {
-	    console.time("tabToActivate");
+	    console.time("tabToActivate"+tabId);
 	    if (this.logLevel > 1)
 		this.consoleLogState('Start Activate Tab. Activate: ' + tabId);
 	}
@@ -85,7 +104,7 @@ class TabHistoryManager {
 	if (log || this.logLevel) {
 	    if (this.logLevel > 1)
 		this.consoleLogState('End Activate Tab');
-	    console.timeEnd("tabToActivate");
+	    console.timeEnd("tabToActivate"+tabId);
 	}
 
 	return this.tabHistory[this.tabHistory.length - 1];
@@ -167,7 +186,7 @@ class TabHistoryManager {
     switchTab(log = false) {
 	if (log || this.logLevel) {
 	    if (this.logLevel > 1)
-		this.consoleLogState('Start switch');
+		this.consoleLogState('Start switch. logLevel:' + this.logLevel);
 	}
 	// if (this.tabHistory.length > 2)
 	//     return this.tabHistory[this.tabHistory.length -  2];
@@ -208,12 +227,14 @@ class TabHistoryManager {
 
     consoleLogState(message) {
 	console.log(message + ' - Current tab history: ', this.tabHistory, ' current: ', this.currentTabId(),
-		    'lastActiveId: ', this.lastActiveId);
+		    'lastActiveId: ', this.lastActiveId, ' logLevel: ', this.logLevel);
     }
     
+    // Ensures the tab history does not exceed the maximum allowed size
     maintainSize() {
+        // Remove excess items from the beginning of the history if it exceeds the limit
         while (this.tabHistory.length > this.historyLimit) {
-            this.tabHistory.shift(); // Remove the oldest tab.
+            this.tabHistory.shift(); // This removes the oldest element (first in array)
         }
     }
 
@@ -229,78 +250,132 @@ class TabHistoryManager {
 	return this.tabHistory.length;
     }
 
+    // A method to validate the current state of the tab manager
+    // This method can be enhanced based on the specific constraints and requirements of the tab manager
     checkState() {
-        // If all checks pass, return true indicating a valid state
-        return true;
-    }    
+        // Checks ensuring the consistency of the tab history
+        if (this.tabHistory.length > this.historyLimit) {
+            console.error('Tab history exceeds the defined limit.');
+            return false;
+        }
+        
+        // Check for the validity of the last active ID
+        if (this.lastActiveId && !this.tabHistory.includes(this.lastActiveId)) {
+            console.error('Last active tab ID is not in the tab history.');
+            return false;
+        }
+        
+        // ... Additional consistency and sanity checks can be added here ...
+
+        return true; // All checks have passed, state is consistent
+    }
+}
+
+// Exporting the class and constants to be available for other modules
+// export { TabHistoryManager, Direction };
     
-}
-
-// module.exports = TabHistoryManager;
-//import TabHistoryManager from './tabHistoryManager.js'; // for default import
-
-// Initialize the Tab History Manager
+// Singleton instance of TabHistoryManager with a predefined history size.
 const tabHistoryManager = new TabHistoryManager(5);
+let logLevel = 0;
 
-// Listener for command inputs like switching tabs
-chrome.commands.onCommand.addListener(function(command) {
-    console.time(command);	
-    loadState();
-    switch (command) {
-    case "switch_to_previous_tab":
-        chrome.tabs.update(tabHistoryManager.previousTab(), {active: true});
-        break;
-    case "switch_to_next_tab":
-        chrome.tabs.update(tabHistoryManager.nextTab(), {active: true});
-        break;
-    case "switch_between_current_and_last":
-        chrome.tabs.update(tabHistoryManager.switchTab(), {active: true});
+// Utility function to handle retrieval of data from storage.
+function getFromStorage(key, callback) {
+    try {
+        chrome.storage.local.get([key], function(result) {
+            if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError.message);
+                return;
+            }
+            callback(result[key]);
+        });
+    } catch (error) {
+        console.error('Error retrieving from storage:', error);
     }
-    console.timeEnd(command);
-});
+}
 
-// Listener for when a tab is activated (selected)
-chrome.tabs.onActivated.addListener(activeInfo => {
-    tabHistoryManager.tabToActivate(activeInfo.tabId); // This method should internally handle adding the tab to history and other required logic.
-});
-
-// Listener for when a tab is closed
-chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
-    tabHistoryManager.removeTab(tabId); // This method should internally handle removing the tab from history and other required logic.
-});
-
-// Similarly, you would need a function to load the state when the extension starts up.
+// Loading state from storage and initializing TabHistoryManager settings.
 function loadState() {
-    // Load the current settings from storage
-    chrome.storage.local.get(['logging'], function(data) {
-	tabHistoryManager.setLogLevel(data.logging);
+    getFromStorage('logLevel', (loggingLevel) => {
+        tabHistoryManager.setLogLevel(loggingLevel);
+	logLevel = loggingLevel;
     });
 
-    // Load the current settings from storage
-    chrome.storage.local.get(['cycleSize'], function(data) {
-        // console.log('data.cycleSize value currently is ' + data.cycleSize);
-	tabHistoryManager.changeCycleSize(data.cycleSize);
+    getFromStorage('cycleSize', (size) => {
+        if (size) {
+            tabHistoryManager.changeCycleSize(size);
+        }
     });
 }
 
-// This function fetches all the tabs, iterates over them, and performs an action.
-function initializeTabs() {
-  // Query for obtaining all the normal browser window tabs
-  chrome.tabs.query({windowType: 'normal'}, function(tabs) {
-    for (let tab of tabs) {
-	// Performing the action on each tab
-        // console.log('activating tab ' + tab.id);
-	tabHistoryManager.tabToActivate(tab.id);
+// Handling the activation of tabs and maintaining history.
+function handleTabActivation(tabId) {
+    try {
+        tabHistoryManager.tabToActivate(tabId);
+    } catch (error) {
+        console.error('Error handling tab activation:', error);
     }
-  });
 }
 
-// Event to handle when the extension is installed or updated, or Chrome is updated.
-// In Manifest V3, the 'onInstalled' event is used instead of 'onStartup' for initial setup after installation or update.
+// Initializing tabs on extension setup.
+function initializeTabs() {
+    chrome.tabs.query({windowType: 'normal'}, function(tabs) {
+        if (chrome.runtime.lastError) {
+            console.error(chrome.runtime.lastError.message);
+            return;
+        }
+
+        tabs.forEach(tab => handleTabActivation(tab.id));
+    });
+}
+
+// Setup when the extension is installed or updated.
 chrome.runtime.onInstalled.addListener(function() {
-  initializeTabs();
+    initializeTabs();
 });
 
-// Call loadState at startup to initialize the manager's state.
-loadState();
+// Listener for command inputs from the user.
+chrome.commands.onCommand.addListener(function(command) {
+    if (logLevel > 0)
+	console.time(command);
 
+    loadState();  // Ensuring we're working with the latest settings.
+
+    try {
+        switch (command) {
+            case "switch_to_previous_tab":
+                chrome.tabs.update(tabHistoryManager.previousTab(), {active: true});
+                break;
+            case "switch_to_next_tab":
+                chrome.tabs.update(tabHistoryManager.nextTab(), {active: true});
+                break;
+            case "switch_between_current_and_last":
+                chrome.tabs.update(tabHistoryManager.switchTab(), {active: true});
+                break;
+            // Include default case to handle unknown commands.
+            default:
+                console.warn('Received unknown command:', command);
+        }
+    } catch (error) {
+        console.error('Error executing command:', command, error);
+    }
+
+    if (logLevel > 0)
+	console.timeEnd(command);
+});
+
+// Monitoring tab activation to maintain the history queue.
+chrome.tabs.onActivated.addListener(activeInfo => {
+    handleTabActivation(activeInfo.tabId);
+});
+
+// Monitoring tab removal to maintain a clean state.
+chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
+    try {
+        tabHistoryManager.removeTab(tabId);
+    } catch (error) {
+        console.error('Error handling tab removal:', error);
+    }
+});
+
+// Initial state load.
+loadState();

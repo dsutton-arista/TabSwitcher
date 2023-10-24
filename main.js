@@ -1,67 +1,105 @@
-//import TabHistoryManager from './tabHistoryManager.js'; // for default import
-
-// Initialize the Tab History Manager
+// Singleton instance of TabHistoryManager with a predefined history size.
 const tabHistoryManager = new TabHistoryManager(5);
+let logLevel = 0;
 
-// Listener for command inputs like switching tabs
-chrome.commands.onCommand.addListener(function(command) {
-    console.time(command);	
-    loadState();
-    switch (command) {
-    case "switch_to_previous_tab":
-        chrome.tabs.update(tabHistoryManager.previousTab(), {active: true});
-        break;
-    case "switch_to_next_tab":
-        chrome.tabs.update(tabHistoryManager.nextTab(), {active: true});
-        break;
-    case "switch_between_current_and_last":
-        chrome.tabs.update(tabHistoryManager.switchTab(), {active: true});
+// Utility function to handle retrieval of data from storage.
+function getFromStorage(key, callback) {
+    try {
+        chrome.storage.local.get([key], function(result) {
+            if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError.message);
+                return;
+            }
+            callback(result[key]);
+        });
+    } catch (error) {
+        console.error('Error retrieving from storage:', error);
     }
-    console.timeEnd(command);
-});
+}
 
-// Listener for when a tab is activated (selected)
-chrome.tabs.onActivated.addListener(activeInfo => {
-    tabHistoryManager.tabToActivate(activeInfo.tabId); // This method should internally handle adding the tab to history and other required logic.
-});
-
-// Listener for when a tab is closed
-chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
-    tabHistoryManager.removeTab(tabId); // This method should internally handle removing the tab from history and other required logic.
-});
-
-// Similarly, you would need a function to load the state when the extension starts up.
+// Loading state from storage and initializing TabHistoryManager settings.
 function loadState() {
-    // Load the current settings from storage
-    chrome.storage.local.get(['logging'], function(data) {
-	tabHistoryManager.setLogLevel(data.logging);
+    getFromStorage('logLevel', (loggingLevel) => {
+        tabHistoryManager.setLogLevel(loggingLevel);
+	logLevel = loggingLevel;
     });
 
-    // Load the current settings from storage
-    chrome.storage.local.get(['cycleSize'], function(data) {
-        // console.log('data.cycleSize value currently is ' + data.cycleSize);
-	tabHistoryManager.changeCycleSize(data.cycleSize);
+    getFromStorage('cycleSize', (size) => {
+        if (size) {
+            tabHistoryManager.changeCycleSize(size);
+        }
     });
 }
 
-// This function fetches all the tabs, iterates over them, and performs an action.
-function initializeTabs() {
-  // Query for obtaining all the normal browser window tabs
-  chrome.tabs.query({windowType: 'normal'}, function(tabs) {
-    for (let tab of tabs) {
-	// Performing the action on each tab
-        // console.log('activating tab ' + tab.id);
-	tabHistoryManager.tabToActivate(tab.id);
+// Handling the activation of tabs and maintaining history.
+function handleTabActivation(tabId) {
+    try {
+        tabHistoryManager.tabToActivate(tabId);
+    } catch (error) {
+        console.error('Error handling tab activation:', error);
     }
-  });
 }
 
-// Event to handle when the extension is installed or updated, or Chrome is updated.
-// In Manifest V3, the 'onInstalled' event is used instead of 'onStartup' for initial setup after installation or update.
+// Initializing tabs on extension setup.
+function initializeTabs() {
+    chrome.tabs.query({windowType: 'normal'}, function(tabs) {
+        if (chrome.runtime.lastError) {
+            console.error(chrome.runtime.lastError.message);
+            return;
+        }
+
+        tabs.forEach(tab => handleTabActivation(tab.id));
+    });
+}
+
+// Setup when the extension is installed or updated.
 chrome.runtime.onInstalled.addListener(function() {
-  initializeTabs();
+    initializeTabs();
 });
 
-// Call loadState at startup to initialize the manager's state.
-loadState();
+// Listener for command inputs from the user.
+chrome.commands.onCommand.addListener(function(command) {
+    if (logLevel > 0)
+	console.time(command);
 
+    loadState();  // Ensuring we're working with the latest settings.
+
+    try {
+        switch (command) {
+            case "switch_to_previous_tab":
+                chrome.tabs.update(tabHistoryManager.previousTab(), {active: true});
+                break;
+            case "switch_to_next_tab":
+                chrome.tabs.update(tabHistoryManager.nextTab(), {active: true});
+                break;
+            case "switch_between_current_and_last":
+                chrome.tabs.update(tabHistoryManager.switchTab(), {active: true});
+                break;
+            // Include default case to handle unknown commands.
+            default:
+                console.warn('Received unknown command:', command);
+        }
+    } catch (error) {
+        console.error('Error executing command:', command, error);
+    }
+
+    if (logLevel > 0)
+	console.timeEnd(command);
+});
+
+// Monitoring tab activation to maintain the history queue.
+chrome.tabs.onActivated.addListener(activeInfo => {
+    handleTabActivation(activeInfo.tabId);
+});
+
+// Monitoring tab removal to maintain a clean state.
+chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
+    try {
+        tabHistoryManager.removeTab(tabId);
+    } catch (error) {
+        console.error('Error handling tab removal:', error);
+    }
+});
+
+// Initial state load.
+loadState();

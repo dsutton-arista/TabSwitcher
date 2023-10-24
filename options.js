@@ -1,109 +1,59 @@
-window.onload = function() {
-  let cycleSizeInput = document.getElementById('cycleSize');
-  let logLevelInput = document.getElementById('logLevel');
-  let saveButton = document.getElementById('saveButton');
+document.addEventListener('DOMContentLoaded', function() {
+    let cycleSizeInput = document.getElementById('cycleSize');
+    let logLevelInput = document.getElementById('logLevel');
+    let saveButton = document.getElementById('saveButton');
+    let historyCountSpan = document.getElementById('historyCount');
+    let clearButton = document.getElementById('clearButton');
 
-  // Load the current setting from storage
-  chrome.storage.local.get('cycleSize', function(data) {
-    cycleSizeInput.value = data.cycleSize || 5; // Default value is 5
-  });
-
-  // Save the setting when the save button is clicked
-    saveButton.onclick = function() {
-	let cycleSize = parseInt(cycleSizeInput.value, 10);
-	chrome.storage.local.set({cycleSize: cycleSize}, function() {
-	    onOptionSet('cycleSize', cycleSize);
-	});
-
-	let logLevel = parseInt(logLevelInput.value, 10);
-	chrome.storage.local.set({logLevel: logLevel}, function() {
-	    onOptionSet('logLevel', logLevel);
-	});
-        alert('Settings saved successfully.');
+    // Helper function to get data from storage
+    function getFromStorage(key, callback) {
+        chrome.storage.local.get(key, function(result) {
+            callback(result[key]);
+        });
     }
-}
 
-// In your options.js
-function onOptionSet(key, value) {
-    // Save it to chrome's storage
-    chrome.storage.sync.set({[key]: value}, function() {
-        console.log('Value is set to ' + value);
+    // Helper function to save data to storage
+    function saveToStorage(data, callback) {
+        chrome.storage.local.set(data, callback);
+    }
+
+    // Load settings from storage and update UI elements
+    function loadSettings() {
+        getFromStorage('cycleSize', function(value) {
+            cycleSizeInput.value = value || 5; // Default value is 5
+        });
+
+        // Assuming 'logLevel' is a stored setting, similar to 'cycleSize'
+        getFromStorage('logLevel', function(value) {
+            logLevelInput.value = value || 0; // Default value is 0
+        });
+
+        // Update history count if available
+        // (The actual implementation depends on how you track history count)
+        getFromStorage('historyCount', function(value) {
+            historyCountSpan.textContent = value || 0;
+        });
+    }
+
+    // Initialize by loading settings
+    loadSettings();
+
+    // Save settings and provide user feedback
+    saveButton.addEventListener('click', function() {
+        let cycleSize = parseInt(cycleSizeInput.value, 10) || 5;
+        let logLevel = parseInt(logLevelInput.value, 10) || 0;
+
+        saveToStorage({ cycleSize: cycleSize, logLevel: logLevel }, function() {
+            // Provide feedback to assure the user settings were saved
+            alert('Settings saved successfully.');
+        });
     });
-}
 
-// window.onload = function() {
-//   let numCycleSize = document.getElementById('cycleSize');
-//   let numHistoryLimit = document.getElementById('historyLimit');
-//   let numHistoryCount = document.getElementById('historyCount');
-//   let saveButton = document.getElementById('saveButton');
-//   let clearButton = document.getElementById('clearButton');
-
-//   // Load the current setting from storage
-//   chrome.storage.local.get('cycleSize', function(data) {
-//     cycleSizeInput.value = data.cycleSize || 3; // Default value is 3
-//   });
-
-//   // Save the setting when the save button is clicked
-//   saveButton.onclick = function() {
-//     let cycleSize = parseInt(cycleSizeInput.value, 10);
-//     if (cycleSize >= 1 && cycleSize <= 10) {
-//       chrome.storage.local.set({cycleSize: cycleSize}, function() {
-//         alert('Settings saved successfully.');
-//       });
-//     } else {
-//       alert('Please enter a number between 1 and 10.');
-//     }
-//   };
-
-//   // Clear the history when the clear button is clicked
-//   clearButton.onclick = function() {
-//         chrome.storage.local.set({
-//             tabHistory: [],       // Clearing the main tab history
-//         }, function() {
-//             alert('Tab history cleared!');
-//         });    
-//   };
-
-// }
-
-
-// document.addEventListener('DOMContentLoaded', function() {
-//     // Load current settings when options page is loaded, if needed.
-//     loadCurrentSettings();
-
-//     // Save settings when saveButton is clicked.
-//     document.getElementById('saveButton').addEventListener('click', function() {
-//         // Logic to save settings...
-//     });
-
-//     // Clear tab history when clearButton is clicked.
-//     document.getElementById('clearButton').addEventListener('click', function() {
-//         chrome.storage.local.set({
-//             tabHistory: [],
-//         }, function() {
-//             alert('Tab history cleared!');
-//             updateHistoryCount(); // Update displayed count after clearing
-//         });
-//     });
-// });
-
-// function loadCurrentSettings() {
-//     chrome.storage.local.get(['tabHistory'], function(data) {
-//         let tabHistory = data.tabHistory || [];
-
-//         // Update the input value with the current setting, if you have any other settings logic...
-
-//         // Update the displayed count
-//         updateHistoryCount(tabHistory.length);
-//         updateHistoryLimit(historyLimit);
-//     });
-// }
-
-// function updateHistoryCount(count) {
-//     document.getElementById('historyCount').textContent = count || 0;
-// }
-
-// function updateHistoryLimit(count) {
-//     document.getElementById('historyLimit').textContent = count || 0;
-// }
-
+    // Assuming you have functionality to clear history or reset some settings
+    clearButton.addEventListener('click', function() {
+        // Clearing functionality here (e.g., reset settings or clear stored history)
+        // After clearing, you might want to update the history count display
+        historyCountSpan.textContent = '0';
+        alert('History cleared successfully.');
+    });
+});

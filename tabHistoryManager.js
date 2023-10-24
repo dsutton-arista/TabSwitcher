@@ -1,20 +1,30 @@
 // tabHistoryManager.js
 
+// Enumeration for tab cycling direction
 const Direction = Object.freeze({
     NEXT: { value: 1, name: 'Next' },
     PREVIOUS: { value: -1, name: 'Previous' }
 });
 
-
+// Class responsible for managing the tab history and related operations
 class TabHistoryManager {
-
     constructor(cycleSize = 3) {
+        // List maintaining the order of accessed tabs
         this.tabHistory = [];
-	this.historyLimit = 100;
+
+        // Maximum number of tabs to keep in the history
+        this.historyLimit = 100;
+
+        // Number of tabs to consider while cycling through tab history
         this.cycleSize = cycleSize;
-	this.lastActiveId = undefined;
-	this.logLevel = 0;
+
+        // Tab ID of the last active tab
+        this.lastActiveId = undefined;
+
+        // Level of log details to output
+        this.logLevel = 0;
     }
+
 
     /**
      * Captures the current state of the tab manager.
@@ -43,19 +53,28 @@ class TabHistoryManager {
             throw new Error('Invalid state object. The state must contain tabHistory and cycleSize.');
         }
     }
-    
+
+    // Update the size of the cycle while maintaining bounds and consistency
     changeCycleSize(newCycleSize) {
-	return this.cycleSize = newCycleSize;
+        if (newCycleSize > 0) { // Ensuring the cycle size is positive
+            this.cycleSize = newCycleSize;
+        } else {
+            throw new Error('Cycle size must be a positive integer.');
+        }
+        return this.cycleSize;
     }
-    
+
+    // Update the history size limit while ensuring it's within reasonable bounds
     changeHistorySize(newHistorySize) {
-	return this.historyLimit = newHistorySize;
+        if (newHistorySize >= 1 && newHistorySize <= 100) { // Bounds check
+            this.historyLimit = newHistorySize;
+        } else {
+            throw new Error('History size must be between 1 and 100.');
+        }
+        return this.historyLimit;
     }
-    
+
     currentTabId(log = false) {
-	if (log || this.logLevel) {
-            this.consoleLogState('Current Tab Id');
-	}
         return this.tabHistory[this.tabHistory.length - 1];
     }
     
@@ -65,7 +84,7 @@ class TabHistoryManager {
 
     tabToActivate(tabId, log = false) {
 	if (log || this.logLevel) {
-	    console.time("tabToActivate");
+	    console.time("tabToActivate"+tabId);
 	    if (this.logLevel > 1)
 		this.consoleLogState('Start Activate Tab. Activate: ' + tabId);
 	}
@@ -85,7 +104,7 @@ class TabHistoryManager {
 	if (log || this.logLevel) {
 	    if (this.logLevel > 1)
 		this.consoleLogState('End Activate Tab');
-	    console.timeEnd("tabToActivate");
+	    console.timeEnd("tabToActivate"+tabId);
 	}
 
 	return this.tabHistory[this.tabHistory.length - 1];
@@ -167,7 +186,7 @@ class TabHistoryManager {
     switchTab(log = false) {
 	if (log || this.logLevel) {
 	    if (this.logLevel > 1)
-		this.consoleLogState('Start switch');
+		this.consoleLogState('Start switch. logLevel:' + this.logLevel);
 	}
 	// if (this.tabHistory.length > 2)
 	//     return this.tabHistory[this.tabHistory.length -  2];
@@ -208,12 +227,14 @@ class TabHistoryManager {
 
     consoleLogState(message) {
 	console.log(message + ' - Current tab history: ', this.tabHistory, ' current: ', this.currentTabId(),
-		    'lastActiveId: ', this.lastActiveId);
+		    'lastActiveId: ', this.lastActiveId, ' logLevel: ', this.logLevel);
     }
     
+    // Ensures the tab history does not exceed the maximum allowed size
     maintainSize() {
+        // Remove excess items from the beginning of the history if it exceeds the limit
         while (this.tabHistory.length > this.historyLimit) {
-            this.tabHistory.shift(); // Remove the oldest tab.
+            this.tabHistory.shift(); // This removes the oldest element (first in array)
         }
     }
 
@@ -229,11 +250,27 @@ class TabHistoryManager {
 	return this.tabHistory.length;
     }
 
+    // A method to validate the current state of the tab manager
+    // This method can be enhanced based on the specific constraints and requirements of the tab manager
     checkState() {
-        // If all checks pass, return true indicating a valid state
-        return true;
-    }    
-    
+        // Checks ensuring the consistency of the tab history
+        if (this.tabHistory.length > this.historyLimit) {
+            console.error('Tab history exceeds the defined limit.');
+            return false;
+        }
+        
+        // Check for the validity of the last active ID
+        if (this.lastActiveId && !this.tabHistory.includes(this.lastActiveId)) {
+            console.error('Last active tab ID is not in the tab history.');
+            return false;
+        }
+        
+        // ... Additional consistency and sanity checks can be added here ...
+
+        return true; // All checks have passed, state is consistent
+    }
 }
 
-// module.exports = TabHistoryManager;
+// Exporting the class and constants to be available for other modules
+// export { TabHistoryManager, Direction };
+    
