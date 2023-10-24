@@ -50,6 +50,34 @@ describe('TabHistoryManager', () => {
         expect(manager.previousTab()).toBe('D');
     });
 
+    test('surprising behaviour of switch', () => {
+	manager.changeHistorySize(5);
+	manager.changeCycleSize(4);
+        manager.tabToActivate('A');
+        manager.tabToActivate('B');
+        manager.tabToActivate('C');
+        manager.tabToActivate('D');
+        expect(manager.nextTab()).toBe('A');
+	manager.tabToActivate('A'); // This simulates the event being called in the browser
+        expect(manager.nextTab()).toBe('B');
+	manager.tabToActivate('B'); // This simulates the event being called in the browser
+        expect(manager.nextTab()).toBe('C');
+	manager.tabToActivate('C'); // This simulates the event being called in the browser
+        expect(manager.nextTab()).toBe('D');
+	manager.tabToActivate('D'); // This simulates the event being called in the browser
+        expect(manager.previousTab()).toBe('C');
+	manager.tabToActivate('C'); // This simulates the event being called in the browser
+        expect(manager.previousTab()).toBe('B');
+	manager.tabToActivate('B'); // This simulates the event being called in the browser
+        expect(manager.previousTab()).toBe('A');
+	manager.tabToActivate('A'); // This simulates the event being called in the browser
+        expect(manager.previousTab()).toBe('D');
+	manager.tabToActivate('D'); // This simulates the event being called in the browser
+//	manager.setLogLevel(2);
+        expect(manager.switchTab()).toBe('A');
+	manager.tabToActivate('A'); // This simulates the event being called in the browser
+    });
+
     test('add a new tab after cycling through the tabs', () => {
 	manager.changeHistorySize(3);
         manager.tabToActivate('A');

@@ -89,6 +89,8 @@ class TabHistoryManager {
 		this.consoleLogState('Start Activate Tab. Activate: ' + tabId);
 	}
 
+	if (this.tabHistory[this.tabHistory.length-1] === tabId) return tabId;
+
 	if (this.tabHistory.includes(tabId)) {
             // If the tab is already in history, remove its old position.
             this.tabHistory = this.tabHistory.filter(id => id !== tabId);
@@ -224,12 +226,40 @@ class TabHistoryManager {
 		this.consoleLogState('End remove');
 	}
     }
-
     consoleLogState(message) {
-	console.log(message + ' - Current tab history: ', this.tabHistory, ' current: ', this.currentTabId(),
-		    'lastActiveId: ', this.lastActiveId, ' logLevel: ', this.logLevel);
+	this.checkState();
+	const length = this.tabHistory.length;
+
+	// Calculate the starting index for slicing the 'tabHistory' to get the last 'cycleSize' elements.
+	const startSlice = Math.max(0, length - this.cycleSize);
+
+	// Extract the last 'cycleSize' elements. If there are fewer elements than 'cycleSize', it takes all available.
+	const lastElements = this.tabHistory.slice(startSlice);
+
+	// Preparing the output message for the last elements, showing only the last three characters of each tabId.
+	const lastElementsOutput = lastElements.length
+              ? lastElements.map((id, index) => {
+		  // Check if 'id' is valid before converting it to a string.
+		  const shortId = id !== undefined ? id.toString().substr(-3) : 'undefined';  // Get the last three characters of the tabId.
+		  return `[${startSlice + index}]: ...${shortId}`;  // Prepare the display string.
+              }).join(' ')
+              : 'None';
+
+	// Check if 'currentTabId()' and 'this.lastActiveId' are valid before converting them to strings.
+	const currentTabId = this.currentTabId();
+	const currentTabString = currentTabId !== undefined ? currentTabId.toString().substr(-3) : 'undefined';
+	const lastActiveString = this.lastActiveId !== undefined ? this.lastActiveId.toString().substr(-3) : 'undefined';
+
+	console.log(
+            `${message} - Current tab history (${length})`,
+            length ? `[0]: ...${(this.tabHistory[0] !== undefined ? this.tabHistory[0].toString().substr(-3) : 'undefined')} ... ` : '',  // Show the first one if available.
+            lastElementsOutput,  // Output for the last 'cycleSize' elements.
+            `current: ...${currentTabString}`,
+            `lastActiveId: ...${lastActiveString}`,
+            `logLevel: ${this.logLevel}`
+	);
     }
-    
+
     // Ensures the tab history does not exceed the maximum allowed size
     maintainSize() {
         // Remove excess items from the beginning of the history if it exceeds the limit
