@@ -278,6 +278,19 @@ describe('TabHistoryManager', () => {
 	expect(manager.switchTab()).toBe('A');
     });
 
+    test('remove a tab that was the last tab', () => {
+	// Setup initial tabs
+	manager.changeCycleSize(4);
+	['A', 'B', 'C', 'D'].forEach(id => manager.tabToActivate(id));
+
+	// Remove the last active tab; the current should be unchanged
+	manager.removeTab('C');
+	expect(manager.currentTabId()).toBe('D'); // 'A', 'B', 'D'
+
+	// Now switch tabs - but we've removed the last active tab so behavour is to stay put
+	expect(manager.switchTab()).toBe('D');
+    });
+
     test('interaction between switchTab, next, and previous', () => {
 	// Setup initial tabs
 	manager.changeCycleSize(4);
