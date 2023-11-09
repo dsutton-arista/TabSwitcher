@@ -57,9 +57,14 @@ chrome.runtime.onInstalled.addListener(function() {
     initializeTabs();
 });
 
+chrome.runtime.onStartup.addListener(function() {
+    // Load tab history state from storage
+    initializeTabs();
+});
+
 // Listener for command inputs from the user.
 chrome.commands.onCommand.addListener(function(command) {
-    if (logLevel > 0)
+    if (logLevel > 2)
 	console.time(command);
 
     loadState();  // Ensuring we're working with the latest settings.
