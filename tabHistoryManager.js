@@ -94,6 +94,12 @@ class TabHistoryManager {
 	if (this.tabHistory.includes(tabId)) {
             // If the tab is already in history, remove its old position.
             this.tabHistory = this.tabHistory.filter(id => id !== tabId);
+
+	    if (this.tabHistory.includes(tabId)) {
+		// There is a duplicate of the tab. Not expected
+		this.consoleLogState('Duplicate tab found: '+tabId);
+		this.tabHistory = this.tabHistory.filter(id => id !== tabId);
+	    }
 	}
 
 	this.lastActiveId = this.tabHistory[this.tabHistory.length - 1];
@@ -218,6 +224,11 @@ class TabHistoryManager {
 
 	const removeIndex = this.tabHistory.indexOf(tabId);
 	if (removeIndex === -1) return;  // Tab not in history.
+
+	if (this.lastActiveId === tabId) {
+	    // Aribitrarily reset the lastActive tab if its now gone
+	    this.lastActiveId = this.tabHistory[this.tabHistory.length];
+	}
 
 	this.tabHistory.splice(removeIndex, 1);  // Remove the tab.
 
