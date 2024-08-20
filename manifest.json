@@ -17,13 +17,13 @@
   "commands": {
     "switch_to_previous_tab": {
       "suggested_key": {
-        "default": "Ctrl+Shift+N"
+        "default": "Ctrl+Shift+P"
       },
       "description": "Switch to the previous tab"
     },
     "switch_to_next_tab": {
       "suggested_key": {
-        "default": "Ctrl+Shift+P"
+        "default": "Ctrl+Shift+N"
       },
       "description": "Switch to the next tab"
     },
