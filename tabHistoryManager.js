@@ -78,6 +78,7 @@ class TabHistoryManager {
         } else {
             throw new Error('History size must be between 1 and 100.');
         }
+	this.maintainSize();
         return this.historyLimit;
     }
 

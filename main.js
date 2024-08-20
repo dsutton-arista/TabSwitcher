@@ -143,6 +143,19 @@ async function initializeExtension() {
             return true; // Indicate that the response will be sent asynchronously
 	}
 
+	if (message.action === 'updateHistorySize') {
+            try {
+		tabHistoryManager.changeHistorySize(message.historyLimit);
+		saveTabHistory();  // Save the updated history
+		sendResponse({ success: true, message: 'History size updated successfully.' });
+            } catch (error) {
+		console.error('Error updating History size:', error);
+		sendResponse({ success: false, message: 'Failed to update history size.' });
+            }
+
+            return true; // Indicate that the response will be sent asynchronously
+	}
+
 	if (message.action === 'clearHistory') {
             // Clear the history in memory
             tabHistoryManager.setState({ tabHistory: [], cycleSize: tabHistoryManager.cycleSize });

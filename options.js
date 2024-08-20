@@ -60,6 +60,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert('Failed to update log level.');
 		}
             });
+            // Notify the background script of the new history size
+            chrome.runtime.sendMessage({ action: 'updateHistorySize', historyLimit: historyLimit }, function(response) {
+		if (response && response.success) {
+                // After updating the history size, reload the history count
+                    getFromStorage('tabHistory', function(history) {
+			historyCountSpan.textContent = (history && history.length) || 0;
+                    });
+		} else {
+                    alert('Failed to update history limit.');
+		}
+            });
+	    loadSettings();
             alert('Settings saved successfully.');
 	});
     });
