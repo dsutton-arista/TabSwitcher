@@ -13,7 +13,7 @@ class TabHistoryManager {
         this.tabHistory = [];
 
         // Maximum number of tabs to keep in the history
-        this.historyLimit = 100;
+        this.historyLimit = 25;
 
         // Number of tabs to consider while cycling through tab history
         this.cycleSize = cycleSize;
@@ -64,6 +64,12 @@ class TabHistoryManager {
         return this.cycleSize;
     }
 
+    // Update the level of the log while maintaining bounds and consistency
+    changeLogLevel(newLogLevel) {
+        this.logLevel = newLogLevel;
+        return this.logLevel;
+    }
+
     // Update the history size limit while ensuring it's within reasonable bounds
     changeHistorySize(newHistorySize) {
         if (newHistorySize >= 1 && newHistorySize <= 100) { // Bounds check
@@ -74,22 +80,28 @@ class TabHistoryManager {
         return this.historyLimit;
     }
 
-    currentTabId(log = false) {
+    currentTabId() {
         return this.tabHistory[this.tabHistory.length - 1];
     }
-    
+
     currentTabIndex() {
         return this.tabHistory.length - 1;
     }
 
     tabToActivate(tabId, log = false) {
-	if (log || this.logLevel) {
-	    console.time("tabToActivate"+tabId);
-	    if (this.logLevel > 1)
-		this.consoleLogState('Start Activate Tab. Activate: ' + tabId);
+	if (tabId === null) {
+	    return null;
 	}
 
-	if (this.tabHistory[this.tabHistory.length-1] === tabId) return tabId;
+	if (this.tabHistory.length > 0 && this.tabHistory[this.tabHistory.length - 1] === tabId) {
+            return tabId;
+	}
+
+	if (log && this.logLevel) {
+	    console.time("tabToActivate"+tabId.toString().substr(-3));
+	    if (this.logLevel > 1)
+		this.consoleLogState('Start Activate ' + tabId.toString().substr(-3));
+	}
 
 	if (this.tabHistory.includes(tabId)) {
             // If the tab is already in history, remove its old position.
@@ -102,20 +114,23 @@ class TabHistoryManager {
 	    }
 	}
 
-	this.lastActiveId = this.tabHistory[this.tabHistory.length - 1];
+	if (this.tabHistory.length > 0) {
+            this.lastActiveId = this.tabHistory[this.tabHistory.length - 1];
+	} else {
+            this.lastActiveId = undefined;
+	}
 
 	// Append the tab to the end, making it the most recently used tab.
 	this.tabHistory.push(tabId);
+	this.maintainSize();
 
-	this.maintainSize()
-
-	if (log || this.logLevel) {
+	if (log && this.logLevel) {
 	    if (this.logLevel > 1)
-		this.consoleLogState('End Activate Tab');
-	    console.timeEnd("tabToActivate"+tabId);
+		this.consoleLogState('End Activate ');
+	    console.timeEnd("tabToActivate"+tabId.toString().substr(-3));
 	}
 
-	return this.tabHistory[this.tabHistory.length - 1];
+	return tabId;
     }
 
     cycleTab(direction = Direction.NEXT, cycleSize = 3, log = false) {
@@ -125,40 +140,26 @@ class TabHistoryManager {
 		this.consoleLogState('Cycle start ' + direction.name + ' ' + cycleSize);
 	}
 
-	// Check for an empty history.
-	if (this.tabHistory.length === 0) {
-	    if (log || this.logLevel) console.timeEnd("cycleTab");
-            return undefined; // No tabs available to cycle.
-	}
+	if (this.tabHistory.length === 0) return undefined;
 
-	this.lastActiveId = this.tabHistory[this.tabHistory.length - 1];
-	
-	// Adjust cycle size if it's larger than the available history.
-	const effectiveCycleSize = Math.min(cycleSize, this.tabHistory.length);
-	if (!effectiveCycleSize) {
-	    if (log || this.logLevel) console.timeEnd("cycleTab");
-	    return this.tabHistory[this.tabHistory.length - 1];
-	}
+        this.lastActiveId = this.tabHistory[this.tabHistory.length - 1];
+        const effectiveCycleSize = Math.min(cycleSize, this.tabHistory.length);
 
-	if (direction === Direction.NEXT) { // Cycling forwards.
-	    // This means we take the first tab in the cycle range and move it to the end of the cycle range.
-
-	    // Identify the start of the cycle range.
-	    const cycleStartIndex = this.tabHistory.length - effectiveCycleSize;
-
-	    // Remove the first tab in the cycle range.
-	    const tabToMove = this.tabHistory.splice(cycleStartIndex, 1)[0];
-
-	    // Add it back to the end of the history, effectively moving it to the end of the cycle range.
-	    this.tabHistory.push(tabToMove);
-	}
-	else if (direction === Direction.PREVIOUS) { // Cycling backwards.
-            // Remove the tab from the end of the history and place it just before the effective cycle range.
-	    const offset = this.tabHistory.length - effectiveCycleSize;
+        if (direction === Direction.NEXT) {
+            const cycleStartIndex = this.tabHistory.length - effectiveCycleSize;
+            const tabToMove = this.tabHistory.splice(cycleStartIndex, 1)[0];
+            this.tabHistory.push(tabToMove);
+        } else if (direction === Direction.PREVIOUS) {
+            const offset = this.tabHistory.length - effectiveCycleSize;
             const tabToMove = this.tabHistory.pop();
             this.tabHistory.splice(offset, 0, tabToMove);
-	}
-	else return undefined;
+        } else {
+            return undefined;
+        }
+
+        if (!this.checkState()) {
+            throw new Error('State became inconsistent after cycling tab.');
+        }
 
 	if (log || this.logLevel) {
 	    if (this.logLevel > 1)
@@ -166,77 +167,84 @@ class TabHistoryManager {
 	    console.timeEnd("cycleTab");
 	}
 
-	// Consistency check after cycling.
-	if (!this.checkState()) {
-            throw new Error('State became inconsistent after cycling tab.');
-	}
-
-	// Return the ID of the now-current tab.
-	return this.tabHistory[this.tabHistory.length - 1];
+        return this.tabHistory[this.tabHistory.length - 1];
     }
 
-    nextTab(log = false) {
-	if (log || this.logLevel) {
-	    if (this.logLevel > 1)
-		this.consoleLogState('Next start');
-	}
-	return this.cycleTab(Direction.NEXT, this.cycleSize, log);
+    nextTab() {
+        return this.cycleTab(Direction.NEXT, this.cycleSize);
     }
 
-    previousTab(log = false) {
-	if (log || this.logLevel) {
-	    if (this.logLevel > 1)
-		this.consoleLogState('Previous start');
-	}
-	return this.cycleTab(Direction.PREVIOUS, this.cycleSize, log);
+    previousTab() {
+        return this.cycleTab(Direction.PREVIOUS, this.cycleSize);
     }
 
-    switchTab(log = false) {
-	if (log || this.logLevel) {
+    switchTab() {
+	if (this.logLevel) {
 	    if (this.logLevel > 1)
-		this.consoleLogState('Start switch. logLevel:' + this.logLevel);
+		this.consoleLogState('Switch Tab Start');
 	}
-	// if (this.tabHistory.length > 2)
-	//     return this.tabHistory[this.tabHistory.length -  2];
-	// else if (this.tabHistory.length == 1)
-	//     return this.tabHistory[0];
-	// else
-	//     return undefined;
+        let tabToSwitchTo = this.tabHistory.indexOf(this.lastActiveId);
+        if (tabToSwitchTo === -1) {
+            if (this.tabHistory.length > 0) {
+                tabToSwitchTo = this.tabHistory.length - 1;
+                this.lastActiveId = this.tabHistory[tabToSwitchTo];
+            } else {
+		if (this.logLevel) {
+		    if (this.logLevel > 1)
+			this.consoleLogState('Switch Tab End');
+		}
+                return undefined;
+            }
+        }
 
-	let tabToSwitchTo = this.tabHistory.indexOf(this.lastActiveId);
-	if (tabToSwitchTo === -1) {
-	    // Last active tab is unknown - if there are tabs assume that last one in the history
-	    if (this.tabHistory.length > 0) {
-		tabToSwitchTo = this.tabHistory.length -  1;
-		this.lastActiveId = this.tabHistory[tabToSwitchTo];
-	    }
-	    else return undefined;  // Tab not in history.
+        const tabId = this.tabToActivate(this.lastActiveId);
+	if (this.logLevel) {
+	    if (this.logLevel > 1)
+		this.consoleLogState('Switch Tab End');
 	}
-
-	return this.tabToActivate(this.lastActiveId, log);
+	return tabId;
     }
 
-    removeTab(tabId, log = false) {
-	if (log || this.logLevel) {
+    removeTab(tabId) {
+        const removeIndex = this.tabHistory.indexOf(tabId);
+        if (removeIndex === -1) return;
+
+	// Remove the deleted tab
+        this.tabHistory.splice(removeIndex, 1);
+	// last = this.lastActiveId;
+	// this.lastActiveId = this.tabHistory[this.tabHistory.length - 2];
+	// this.tabToActivate(this.lastActiveId);
+
+        // Update lastActiveId to the correct tab
+        if (this.tabHistory.length > 1) {
+	    // Get the second-to-last tab in history, which should be the "new" last active tab
+	    this.lastActiveId = this.tabHistory[this.tabHistory.length - 2];
 	    if (this.logLevel > 1)
-		this.consoleLogState('Start remove');
-	}
+		this.consoleLogState('RemoveTab');
+        } else {
+	    this.lastActiveId = undefined; // Handle edge case where history is empty
+        }
 
-	const removeIndex = this.tabHistory.indexOf(tabId);
-	if (removeIndex === -1) return;  // Tab not in history.
+	// if (this.lastActiveId === tabId) {
+        //     this.lastActiveId = this.tabHistory[this.tabHistory.length];
+        // }
 
-	if (this.lastActiveId === tabId) {
-	    // Aribitrarily reset the lastActive tab if its now gone
-	    this.lastActiveId = this.tabHistory[this.tabHistory.length];
-	}
-
-	this.tabHistory.splice(removeIndex, 1);  // Remove the tab.
-
-	if (log || this.logLevel) {
-	    if (this.logLevel > 1)
-		this.consoleLogState('End remove');
-	}
+	// if (this.lastActiveId === this.currentTabId()) {
+        //     this.lastActiveId = this.tabHistory[this.tabHistory.length - 1];
+        // }
+	console.log("Return from removeTab");
     }
+
+    maintainSize() {
+        while (this.tabHistory.length > this.historyLimit) {
+            this.tabHistory.shift();
+        }
+    }
+
+    setLogLevel(logLevel) {
+        this.logLevel = logLevel;
+    }
+
     consoleLogState(message) {
 	this.checkState();
 	const length = this.tabHistory.length;
@@ -262,25 +270,13 @@ class TabHistoryManager {
 	const lastActiveString = this.lastActiveId !== undefined ? this.lastActiveId.toString().substr(-3) : 'undefined';
 
 	console.log(
-            `${message} - Current tab history (${length})`,
+            `${message} - current: ...${currentTabString}`,
+            `last: ...${lastActiveString}`,
+            `history (${length})`,
             length ? `[0]: ...${(this.tabHistory[0] !== undefined ? this.tabHistory[0].toString().substr(-3) : 'undefined')} ... ` : '',  // Show the first one if available.
             lastElementsOutput,  // Output for the last 'cycleSize' elements.
-            `current: ...${currentTabString}`,
-            `lastActiveId: ...${lastActiveString}`,
-            `logLevel: ${this.logLevel}`
+            `log: ${this.logLevel}`
 	);
-    }
-
-    // Ensures the tab history does not exceed the maximum allowed size
-    maintainSize() {
-        // Remove excess items from the beginning of the history if it exceeds the limit
-        while (this.tabHistory.length > this.historyLimit) {
-            this.tabHistory.shift(); // This removes the oldest element (first in array)
-        }
-    }
-
-    setLogLevel(logLevel) {
-        this.logLevel = logLevel;
     }
 
     getHistory() {
@@ -288,27 +284,19 @@ class TabHistoryManager {
     }
 
     getHistorySize() {
-	return this.tabHistory.length;
+        return this.tabHistory.length;
     }
 
-    // A method to validate the current state of the tab manager
-    // This method can be enhanced based on the specific constraints and requirements of the tab manager
     checkState() {
-        // Checks ensuring the consistency of the tab history
         if (this.tabHistory.length > this.historyLimit) {
             console.error('Tab history exceeds the defined limit.');
             return false;
         }
-        
-        // Check for the validity of the last active ID
         if (this.lastActiveId && !this.tabHistory.includes(this.lastActiveId)) {
             console.error('Last active tab ID is not in the tab history.');
             return false;
         }
-        
-        // ... Additional consistency and sanity checks can be added here ...
-
-        return true; // All checks have passed, state is consistent
+        return true;
     }
 }
 

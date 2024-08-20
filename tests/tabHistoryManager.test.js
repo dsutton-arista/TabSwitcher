@@ -1,6 +1,15 @@
 // tabHistoryManager.test.js
 const TabHistoryManager = require('./../tabHistoryManagerTestable');
 
+beforeAll(() => {
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+});
+
+afterAll(() => {
+  console.log.mockRestore();
+});
+
+
 describe('TabHistoryManager', () => {
     let manager;
 
@@ -129,11 +138,10 @@ describe('TabHistoryManager', () => {
 	expect(() => manager.tabToActivate(null)).not.toThrow();
 	expect(() => manager.tabToActivate(undefined)).not.toThrow();
 	expect(() => manager.tabToActivate('randomString')).not.toThrow();
-	// If you have specific behavior defined for these cases, check for those instead of just 'not.toThrow()'
     });
 
     test('sequential tab activation and navigation', () => {
-	manager.changeCycleSize(4); // Assuming you can change limit on-the-fly.
+	manager.changeCycleSize(4); // Assuming changing limit on-the-fly.
 	const sequence = ['A', 'B', 'C', 'D']; // Using letters for clarity.
 	
 	sequence.forEach(tab => manager.tabToActivate(tab));
@@ -183,7 +191,6 @@ describe('TabHistoryManager', () => {
     });
 
     test('should handle direct history manipulation', () => {
-	// This depends on whether you allow direct manipulation of history or not
 	manager.tabHistory = [4, 5, 6];  // Directly setting a state, which is usually not recommended
 
 	expect(manager.nextTab()).toBe(4);
@@ -287,8 +294,8 @@ describe('TabHistoryManager', () => {
 	manager.removeTab('C');
 	expect(manager.currentTabId()).toBe('D'); // 'A', 'B', 'D'
 
-	// Now switch tabs - but we've removed the last active tab so behavour is to stay put
-	expect(manager.switchTab()).toBe('D');
+	// Now switch tabs - but we've removed the last active tab so behavour is to go to the previous one
+	expect(manager.switchTab()).toBe('B');
     });
 
     test('interaction between switchTab, next, and previous', () => {

@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
+    let historyLimitInput = document.getElementById('historyLimit'); // Added this line
     let cycleSizeInput = document.getElementById('cycleSize');
     let logLevelInput = document.getElementById('logLevel');
     let saveButton = document.getElementById('saveButton');
@@ -19,19 +20,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load settings from storage and update UI elements
     function loadSettings() {
+        getFromStorage('historyLimit', function(value) { // Added this block
+            historyLimitInput.value = value || 50; // Default value is 50
+        });
+
         getFromStorage('cycleSize', function(value) {
             cycleSizeInput.value = value || 5; // Default value is 5
         });
 
-        // Assuming 'logLevel' is a stored setting, similar to 'cycleSize'
         getFromStorage('logLevel', function(value) {
             logLevelInput.value = value || 0; // Default value is 0
         });
 
         // Update history count if available
-        // (The actual implementation depends on how you track history count)
-        getFromStorage('historyCount', function(value) {
-            historyCountSpan.textContent = value || 0;
+        getFromStorage('tabHistory', function(history) {
+            historyCountSpan.textContent = (history && history.length) || 0;
         });
     }
 
@@ -40,20 +43,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Save settings and provide user feedback
     saveButton.addEventListener('click', function() {
-        let cycleSize = parseInt(cycleSizeInput.value, 10) || 5;
-        let logLevel = parseInt(logLevelInput.value, 10) || 0;
+	let historyLimit = parseInt(historyLimitInput.value, 10) || 50;
+	let cycleSize = parseInt(cycleSizeInput.value, 10) || 5;
+	let logLevel = parseInt(logLevelInput.value, 10) || 0;
 
-        saveToStorage({ cycleSize: cycleSize, logLevel: logLevel }, function() {
-            // Provide feedback to assure the user settings were saved
+	saveToStorage({ historyLimit: historyLimit, cycleSize: cycleSize, logLevel: logLevel }, function() {
+            // Notify the background script of the new cycleSize
+            chrome.runtime.sendMessage({ action: 'updateCycleSize', cycleSize: cycleSize }, function(response) {
+		if (!(response && response.success)) {
+                    alert('Failed to update cycle size.');
+		}
+            });
+            // Notify the background script of the new loglevel
+            chrome.runtime.sendMessage({ action: 'updateLogLevel', logLevel: logLevel }, function(response) {
+		if (!(response && response.success)) {
+                    alert('Failed to update log level.');
+		}
+            });
             alert('Settings saved successfully.');
-        });
+	});
     });
 
-    // Assuming you have functionality to clear history or reset some settings
+
+    // Clear history and update display
     clearButton.addEventListener('click', function() {
-        // Clearing functionality here (e.g., reset settings or clear stored history)
-        // After clearing, you might want to update the history count display
-        historyCountSpan.textContent = '0';
-        alert('History cleared successfully.');
+	chrome.runtime.sendMessage({ action: 'clearHistory' }, function(response) {
+            if (response && response.success) {
+		historyCountSpan.textContent = '0';
+		alert(response.message);
+            } else {
+		alert('Failed to clear history.');
+            }
+	});
     });
+
 });
