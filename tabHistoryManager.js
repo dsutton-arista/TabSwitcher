@@ -32,8 +32,9 @@ class TabHistoryManager {
      */
     getState() {
         return {
-            tabHistory: this.tabHistory,           // The order of tabs as they were accessed
-            cycleSize: this.cycleSize,                     // Maximum number of entries 'tabHistory' can hold
+            tabHistory: this.tabHistory,     // The order of tabs as they were accessed
+	    historyLimit: this.historyLimit, // Maximum number of entries 'tabHistory' can hold
+            cycleSize: this.cycleSize,	     // Cycle size
         };
     }
 

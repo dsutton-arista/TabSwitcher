@@ -26,6 +26,11 @@ async function loadState() {
     if (cycleSize) {
         tabHistoryManager.changeCycleSize(cycleSize);
     }
+
+    const historyLimit = await getFromStorage('historyLimit');
+    if (historyLimit) {
+        tabHistoryManager.changeHistorySize(historyLimit);
+    }
 }
 
 function saveTabHistory() {
