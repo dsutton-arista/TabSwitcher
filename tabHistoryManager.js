@@ -99,7 +99,7 @@ class TabHistoryManager {
 	}
 
 	if (log && this.logLevel) {
-	    console.time("tabToActivate"+tabId.toString().substr(-3));
+	    console.time("tabToActivate  "+tabId.toString().substr(-3));
 	    if (this.logLevel > 1)
 		this.consoleLogState('Start Activate ' + tabId.toString().substr(-3));
 	}
@@ -127,8 +127,8 @@ class TabHistoryManager {
 
 	if (log && this.logLevel) {
 	    if (this.logLevel > 1)
-		this.consoleLogState('End Activate ');
-	    console.timeEnd("tabToActivate"+tabId.toString().substr(-3));
+		this.consoleLogState('End   Activate '+ tabId.toString().substr(-3));
+	    console.timeEnd("tabToActivate  "+tabId.toString().substr(-3));
 	}
 
 	return tabId;
@@ -138,7 +138,7 @@ class TabHistoryManager {
 	if (log || this.logLevel) {
 	    console.time("cycleTab");
 	    if (this.logLevel > 1)
-		this.consoleLogState('Cycle start ' + direction.name + ' ' + cycleSize);
+		this.consoleLogState('Cycle start ' + direction.name.toString().substr(0, 4) + ' ' + cycleSize);
 	}
 
 	if (this.tabHistory.length === 0) return undefined;
@@ -164,7 +164,7 @@ class TabHistoryManager {
 
 	if (log || this.logLevel) {
 	    if (this.logLevel > 1)
-		this.consoleLogState('Cycle end');
+		this.consoleLogState('Cycle end         ');
 	    console.timeEnd("cycleTab");
 	}
 
@@ -221,7 +221,7 @@ class TabHistoryManager {
 	    // Get the second-to-last tab in history, which should be the "new" last active tab
 	    this.lastActiveId = this.tabHistory[this.tabHistory.length - 2];
 	    if (this.logLevel > 1)
-		this.consoleLogState('RemoveTab');
+		this.consoleLogState('Remove Tab     '+ tabId.toString().substr(-3));
         } else {
 	    this.lastActiveId = undefined; // Handle edge case where history is empty
         }
@@ -261,7 +261,7 @@ class TabHistoryManager {
               ? lastElements.map((id, index) => {
 		  // Check if 'id' is valid before converting it to a string.
 		  const shortId = id !== undefined ? id.toString().substr(-3) : 'undefined';  // Get the last three characters of the tabId.
-		  return `[${startSlice + index}]: ...${shortId}`;  // Prepare the display string.
+		  return `${startSlice + index}:${shortId}`;  // Prepare the display string.
               }).join(' ')
               : 'None';
 
@@ -274,7 +274,7 @@ class TabHistoryManager {
             `${message} - current: ...${currentTabString}`,
             `last: ...${lastActiveString}`,
             `history (${length})`,
-            length ? `[0]: ...${(this.tabHistory[0] !== undefined ? this.tabHistory[0].toString().substr(-3) : 'undefined')} ... ` : '',  // Show the first one if available.
+            length ? `0:${(this.tabHistory[0] !== undefined ? this.tabHistory[0].toString().substr(-3) : 'undefined')} --> ` : '',  // Show the first one if available.
             lastElementsOutput,  // Output for the last 'cycleSize' elements.
             `log: ${this.logLevel}`
 	);
