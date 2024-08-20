@@ -109,7 +109,6 @@ async function initializeExtension() {
 
     chrome.tabs.onRemoved.addListener((tabId) => {
         try {
-	    console.log("Removing", tabId.toString().substr(-3));
             tabHistoryManager.removeTab(tabId);
             tabHistoryManager.maintainSize(); // Enforce the history limit
             saveTabHistory();  // Save the updated history

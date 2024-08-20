@@ -27,8 +27,10 @@ class TabHistoryManager {
 
 
     /**
-     * Captures the current state of the tab manager.
-     * This function is used for saving the state and must return a serializable object.
+     * Restores the state of the tab manager.
+     * This function is used for loading the state from a saved object.
+     *
+     * @param {Object} state - The previously saved state of the tab manager.
      */
     getState() {
         return {
@@ -39,10 +41,8 @@ class TabHistoryManager {
     }
 
     /**
-     * Restores the state of the tab manager.
-     * This function is used for loading the state from a saved object.
-     *
-     * @param {Object} state - The previously saved state of the tab manager.
+     * Captures the current state of the tab manager.
+     * This function is used for saving the state and must return a serializable object.
      */
     setState(state) {
         // Ensure that the state contains all necessary properties to prevent errors.
@@ -212,9 +212,6 @@ class TabHistoryManager {
 
 	// Remove the deleted tab
         this.tabHistory.splice(removeIndex, 1);
-	// last = this.lastActiveId;
-	// this.lastActiveId = this.tabHistory[this.tabHistory.length - 2];
-	// this.tabToActivate(this.lastActiveId);
 
         // Update lastActiveId to the correct tab
         if (this.tabHistory.length > 1) {
@@ -226,14 +223,6 @@ class TabHistoryManager {
 	    this.lastActiveId = undefined; // Handle edge case where history is empty
         }
 
-	// if (this.lastActiveId === tabId) {
-        //     this.lastActiveId = this.tabHistory[this.tabHistory.length];
-        // }
-
-	// if (this.lastActiveId === this.currentTabId()) {
-        //     this.lastActiveId = this.tabHistory[this.tabHistory.length - 1];
-        // }
-	console.log("Return from removeTab");
     }
 
     maintainSize() {
