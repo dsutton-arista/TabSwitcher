@@ -3,7 +3,7 @@
   "name": "Tab Switcher",
   "version": "1.0",
   "description": "A Chrome extension that allows users to switch between their most recently used tabs.",
-    "permissions": ["tabs", "storage"],
+    "permissions": ["storage"],
   "action": {
     "default_icon": {
       "16": "images/icon16.png",
