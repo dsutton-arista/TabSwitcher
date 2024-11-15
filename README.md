@@ -1,6 +1,4 @@
 # Tab Switcher 
-_All code and content written by ChatGPT_ (Except this line)
-
 Tab Switcher is a Chrome extension that allows you to switch between your most recently used tabs using keyboard shortcuts.
 
 ## Rationale
@@ -32,7 +30,7 @@ Scroll down to the bottom and click on "Keyboard shortcuts".
 Find "Tab Switcher" in the list and click on the pencil icon next to each action to set a new shortcut key.
 
 ## Configuring the Number of Tabs
-To configure the number of tabs in the switching history, click on the extension's icon in the browser bar and enter the desired number in the input field. By default, it is set to 3.
+To configure the number of tabs in the switching history, click on the extension's icon in the browser bar and enter the desired number in the input field. By default, it is set to 5.
 
 We hope you find this extension useful. If you encounter any issues or have any suggestions, please feel free to create an issue in the GitHub repository.
 
