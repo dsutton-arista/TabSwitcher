@@ -17,26 +17,30 @@
   "commands": {
     "switch-to-previous-tab": {
       "suggested_key": {
-        "mac": "Alt+Q",
-        "default": "Alt+Q"
+        "mac": "Alt+S",
+        "default": "Alt+S"
       },
       "description": "Switch to the previous tab"
     },
     "cycle-back-tabs": {
       "suggested_key": {
-        "mac": "Alt+Shift+Q",
-        "default": "Alt+Shift+Q"
+        "mac": "Alt+P",
+        "default": "Alt+P"
       },
       "description": "Cycle back through recent tabs"
     },
     "cycle-forward-tabs": {
       "suggested_key": {
-        "mac": "Alt+Shift+W",
-        "default": "Alt+Shift+W"
+        "mac": "Alt+N",
+        "default": "Alt+N"
       },
       "description": "Cycle forward through recent tabs"
     },
     "cycle-back-tabs-X2": {
+      "suggested_key": {
+        "mac": "Alt+Shift+P",
+        "default": "Alt+Shift+P"
+      },
       "description": "Cycle back through twice as many recent tabs"
     },
     "cycle-forward-tabs-X2": {
