@@ -27,15 +27,22 @@ chrome.commands.onCommand.addListener((command) => {
       if (command === 'switch-to-previous-tab') {
         toggleTab(windowId);
       } else {
-        let tabsToCycle = settings.tabsToCycle;
-        if (command.endsWith('-X2')) {
-          tabsToCycle *= 2;
-        }
-        if (command.startsWith('cycle-back')) {
-          previousTab(windowId, 1, tabsToCycle);
-        } else if (command.startsWith('cycle-forward')) {
-          nextTab(windowId, 1, tabsToCycle);
-        }
+
+	  chrome.tabs.query({ windowId: windowId }, (tabs) => {
+              let tabsToCycle = settings.tabsToCycle;
+              if (command.endsWith('-X2')) {
+		  tabsToCycle *= 2;
+              }
+
+              // Ensure tabsToCycle does not exceed the number of tabs in the window
+              tabsToCycle = Math.min(tabsToCycle, tabs.length);
+
+              if (command.startsWith('cycle-back')) {
+		  previousTab(windowId, 1, tabsToCycle);
+              } else if (command.startsWith('cycle-forward')) {
+		  nextTab(windowId, 1, tabsToCycle);
+              }
+          });
       }
     }
   });
