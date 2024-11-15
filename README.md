@@ -10,10 +10,11 @@ Chrome also has a shortcut Ctrl/Cmd + [1-9] to switch to a specific tab by its p
 This extension provides more advanced tab management by keeping a history of tabs and switching among them in the order they were last accessed.
 
 ## Features
-Switch to the previous tab using `Ctrl+Shift+P`
-Switch to the next tab using `Ctrl+Shift+N`
-Toggle between current and last tab using `Ctrl+Shift+S`
-The number of tabs in the switching history can be configured by the user
+Switch to the previous tab using `Ctrl+P`
+Switch to the next tab using `Ctrl+N`
+Toggle between current and last tab using `Ctrl+S`
+The number of tabs in the switching history can be configured by the user (defaults to 5).
+If you are looking for a tab and it has fallen out of the history size then you can use Shift to double the size of the search history. i.e. if the configured history size is 5 then using `Ctrl+Shift+P` will cycle through twice as many as the default size (10 in this case).
 
 ## Installation
 Clone or download this repository to your local machine.
