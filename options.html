@@ -1,39 +1,22 @@
+<!-- options.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tab Switcher Options</title>
-    <style>
-        /* Add some basic styling to space elements a bit */
-        body {
-            padding: 20px;
-        }
-        label, button {
-            margin-top: 10px;
-            display: inline-block;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>TabSwitcherO1p Options</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    label { display: block; margin-top: 10px; }
+    input[type="number"] { width: 50px; }
+  </style>
 </head>
 <body>
-    <h1>Tab Switcher Options</h1>
-    <label>
-        Number of tabs to remember:
-        <input type="number" id="historyLimit" min="1" max="100">
-    </label>
-    <br>
-    <label>
-        Number of tabs to cycle through:
-        <input type="number" id="cycleSize" min="1" max="10">
-    </label>
-    <br>
-    <label>
-        Log Level:
-        <input type="number" id="logLevel" min="0" max="10">
-    </label>
-    <br>
-    <button id="saveButton">Save</button>
-    <br>
-    <p>Current number of items in history: <span id="historyCount">0</span></p>
-    <button id="clearButton">Clear</button>
-    <script src="options.js"></script>
+  <h1>TabSwitcherO1p Settings</h1>
+  <label>
+    Tabs to Cycle Through:
+    <input type="number" id="tabsToCycle" min="2" max="100">
+  </label>
+  <button id="save">Save</button>
+  <script src="options.js"></script>
 </body>
 </html>

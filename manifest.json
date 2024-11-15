@@ -15,24 +15,41 @@
     "service_worker": "background.js"
   },
   "commands": {
-    "switch_to_previous_tab": {
+    "switch-to-previous-tab": {
       "suggested_key": {
-        "default": "Ctrl+Shift+P"
+        "mac": "Alt+Q",
+        "default": "Alt+Q"
       },
       "description": "Switch to the previous tab"
     },
-    "switch_to_next_tab": {
+    "cycle-back-tabs": {
       "suggested_key": {
-        "default": "Ctrl+Shift+N"
+        "mac": "Alt+Shift+Q",
+        "default": "Alt+Shift+Q"
       },
-      "description": "Switch to the next tab"
+      "description": "Cycle back through recent tabs"
     },
-    "switch_between_current_and_last": {
+    "cycle-forward-tabs": {
       "suggested_key": {
-        "default": "Ctrl+Shift+S"
+        "mac": "Alt+Shift+W",
+        "default": "Alt+Shift+W"
       },
-      "description": "Switch between current and last tab"
+      "description": "Cycle forward through recent tabs"
+    },
+    "cycle-back-tabs-X2": {
+      "description": "Cycle back through twice as many recent tabs"
+    },
+    "cycle-forward-tabs-X2": {
+      "description": "Cycle forward through twice as many recent tabs"
     }
   },
-  "options_page": "options.html"
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
 }
